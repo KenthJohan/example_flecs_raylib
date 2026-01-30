@@ -9,6 +9,7 @@
 #include "Spatials.h"
 #include "Shapes.h"
 #include "Draws.h"
+#include "Colors.h"
 
 // include header for getcwd
 #include <unistd.h>
@@ -67,6 +68,7 @@ int main(void)
 	ECS_IMPORT(world, Spatials);
 	ECS_IMPORT(world, Shapes);
 	ECS_IMPORT(world, Draws);
+	ECS_IMPORT(world, Colors);
 	ecs_set(world, EcsWorld, EcsRest, {.port = 0});
 	printf("Remote: %s\n", "https://www.flecs.dev/explorer/?remote=true");
 
@@ -144,7 +146,7 @@ int main(void)
 
 		// Draw a reference circle
 		//DrawCircle(GetScreenWidth() / 2, GetScreenHeight() / 2, 50, MAROON);
-		DrawRectangleProRotates((Vector2){rec01.x, rec01.y}, rec01.width, rec01.height, angle, BLUE);
+		//DrawRectangleProRotates((Vector2){rec01.x, rec01.y}, rec01.width, rec01.height, angle, BLUE);
 
 
 		EndMode2D();
@@ -155,9 +157,8 @@ int main(void)
         DrawText(isMouseOver ? "Mouse Over: YES" : "Mouse Over: NO", 10, 40, 20, DARKGRAY);
         
 		// Draw mouse reference
-		// Vector2 mousePos = GetWorldToScreen2D(GetMousePosition(), camera)
 		DrawCircleV(GetMousePosition(), 4, DARKGRAY);
-		DrawTextEx(GetFontDefault(), TextFormat("[%i, %i]", GetMouseX(), GetMouseY()),
+		DrawTextEx(GetFontDefault(), TextFormat("[%i, %i]", (int)mousePosWorld.x, (int)mousePosWorld.y),
 		Vector2Add(GetMousePosition(), (Vector2){-44, -24}), 20, 2, BLACK);
 
 		GuiSetStyle(LABEL, TEXT_COLOR_NORMAL, ColorToInt(GRAY));
