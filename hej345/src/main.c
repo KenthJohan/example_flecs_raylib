@@ -143,7 +143,7 @@ int main(void)
         ecs_progress(world, 0);
 
 		// Draw a reference circle
-		DrawCircle(GetScreenWidth() / 2, GetScreenHeight() / 2, 50, MAROON);
+		//DrawCircle(GetScreenWidth() / 2, GetScreenHeight() / 2, 50, MAROON);
 		DrawRectangleProRotates((Vector2){rec01.x, rec01.y}, rec01.width, rec01.height, angle, BLUE);
 
 

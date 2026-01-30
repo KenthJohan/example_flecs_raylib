@@ -5,6 +5,7 @@ world  {
         shapes.Rectangle : {20, 20}
         spatials.Position2World
         spatials.Position2Local : {100, -20}
+        spatials.RotationWorld : {0.5}
         a1  {
             shapes.Circle : {30}
             spatials.Position2World
