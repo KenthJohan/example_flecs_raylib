@@ -1,19 +1,22 @@
 #include "Spatials.h"
 #include <math.h>
 
-ECS_COMPONENT_DECLARE(SpatialsPosition2Local);
-ECS_COMPONENT_DECLARE(SpatialsPosition2World);
-ECS_COMPONENT_DECLARE(SpatialsRotationLocal);
-ECS_COMPONENT_DECLARE(SpatialsRotationWorld);
+ECS_COMPONENT_DECLARE(SpatialsPosition2);
+
+ECS_COMPONENT_DECLARE(SpatialsRotation);
+
 ECS_COMPONENT_DECLARE(SpatialsTransform2);
 ECS_COMPONENT_DECLARE(SpatialsVector2);
 ECS_COMPONENT_DECLARE(SpatialsOmega);
 
+ECS_COMPONENT_DECLARE(SpatialsWorldRotation);
+ECS_COMPONENT_DECLARE(SpatialsWorldPosition2);
+
 static void Position2_Cascade(ecs_iter_t *it)
 {
-	SpatialsPosition2World *g = ecs_field(it, SpatialsPosition2World, 0);       // self, out
-	SpatialsPosition2Local const *l = ecs_field(it, SpatialsPosition2Local, 1); // self, in
-	SpatialsPosition2World const *p = ecs_field(it, SpatialsPosition2World, 2); // parent, in
+	SpatialsWorldPosition2 *g = ecs_field(it, SpatialsWorldPosition2, 0);       // self, out
+	SpatialsPosition2 const *l = ecs_field(it, SpatialsPosition2, 1);           // self, in
+	SpatialsWorldPosition2 const *p = ecs_field(it, SpatialsWorldPosition2, 2); // parent, in
 	SpatialsTransform2 const *t = ecs_field(it, SpatialsTransform2, 3);         // parent, in
 	for (int i = 0; i < it->count; ++i, ++l, ++g) {
 		if (t) {
@@ -32,9 +35,9 @@ static void Position2_Cascade(ecs_iter_t *it)
 
 static void Rotation_Cascade(ecs_iter_t *it)
 {
-	SpatialsRotationWorld *g = ecs_field(it, SpatialsRotationWorld, 0);       // self, out
-	SpatialsRotationLocal const *l = ecs_field(it, SpatialsRotationLocal, 1); // self, in
-	SpatialsRotationWorld const *p = ecs_field(it, SpatialsRotationWorld, 2); // parent, in
+	SpatialsWorldRotation *g = ecs_field(it, SpatialsWorldRotation, 0);       // self, out
+	SpatialsRotation const *l = ecs_field(it, SpatialsRotation, 1);           // self, in
+	SpatialsWorldRotation const *p = ecs_field(it, SpatialsWorldRotation, 2); // parent, in
 	for (int i = 0; i < it->count; ++i, ++l, ++g) {
 		g->radians = l->radians;
 		if (p) {
@@ -55,8 +58,8 @@ void SpatialsTransform2_make_rotation(SpatialsTransform2 *r, float radians)
 
 static void Transform_Make(ecs_iter_t *it)
 {
-	SpatialsTransform2 *t = ecs_field(it, SpatialsTransform2, 0);             // self, out
-	SpatialsRotationLocal const *r = ecs_field(it, SpatialsRotationLocal, 1); // self, in
+	SpatialsTransform2 *t = ecs_field(it, SpatialsTransform2, 0);   // self, out
+	SpatialsRotation const *r = ecs_field(it, SpatialsRotation, 1); // self, in
 	for (int i = 0; i < it->count; ++i, ++r, ++t) {
 		SpatialsTransform2_make_rotation(t, r->radians);
 	}
@@ -64,8 +67,8 @@ static void Transform_Make(ecs_iter_t *it)
 
 static void Rotator(ecs_iter_t *it)
 {
-	SpatialsRotationLocal *r = ecs_field(it, SpatialsRotationLocal, 0); // self, out
-	SpatialsOmega const *o = ecs_field(it, SpatialsOmega, 1);           // self, in
+	SpatialsRotation *r = ecs_field(it, SpatialsRotation, 0); // self, out
+	SpatialsOmega const *o = ecs_field(it, SpatialsOmega, 1); // self, in
 	for (int i = 0; i < it->count; ++i, ++r, ++o) {
 		r->radians += o->radians_per_second;
 	}
@@ -83,37 +86,38 @@ void SpatialsImport(ecs_world_t *world)
 	ECS_MODULE(world, Spatials);
 	ecs_set_name_prefix(world, "Spatials");
 
-	ECS_COMPONENT_DEFINE(world, SpatialsPosition2Local);
-	ECS_COMPONENT_DEFINE(world, SpatialsPosition2World);
-	ECS_COMPONENT_DEFINE(world, SpatialsRotationLocal);
-	ECS_COMPONENT_DEFINE(world, SpatialsRotationWorld);
+	ECS_COMPONENT_DEFINE(world, SpatialsPosition2);
+	ECS_COMPONENT_DEFINE(world, SpatialsRotation);
 	ECS_COMPONENT_DEFINE(world, SpatialsTransform2);
 	ECS_COMPONENT_DEFINE(world, SpatialsOmega);
+
+	ECS_COMPONENT_DEFINE(world, SpatialsWorldPosition2);
+	ECS_COMPONENT_DEFINE(world, SpatialsWorldRotation);
 
 	ecs_set_hooks(world, SpatialsTransform2, {.ctor = ecs_ctor(SpatialsTransform2)});
 
 	ecs_struct(world,
-	{.entity = ecs_id(SpatialsPosition2Local),
+	{.entity = ecs_id(SpatialsPosition2),
 	.members = {
 	{.name = "x", .type = ecs_id(ecs_f32_t)},
 	{.name = "y", .type = ecs_id(ecs_f32_t)},
 	}});
 
 	ecs_struct(world,
-	{.entity = ecs_id(SpatialsPosition2World),
+	{.entity = ecs_id(SpatialsWorldPosition2),
 	.members = {
 	{.name = "x", .type = ecs_id(ecs_f32_t)},
 	{.name = "y", .type = ecs_id(ecs_f32_t)},
 	}});
 
 	ecs_struct(world,
-	{.entity = ecs_id(SpatialsRotationLocal),
+	{.entity = ecs_id(SpatialsRotation),
 	.members = {
 	{.name = "radians", .type = ecs_id(ecs_f32_t)},
 	}});
 
 	ecs_struct(world,
-	{.entity = ecs_id(SpatialsRotationWorld),
+	{.entity = ecs_id(SpatialsWorldRotation),
 	.members = {
 	{.name = "radians", .type = ecs_id(ecs_f32_t)},
 	}});
@@ -142,7 +146,7 @@ void SpatialsImport(ecs_world_t *world)
 	{.entity = ecs_entity(world, {.name = "Rotator", .add = ecs_ids(ecs_dependson(EcsPreUpdate))}),
 	.callback = Rotator,
 	.query.terms = {
-	{.id = ecs_id(SpatialsRotationLocal), .inout = EcsOut},
+	{.id = ecs_id(SpatialsRotation), .inout = EcsOut},
 	{.id = ecs_id(SpatialsOmega), .inout = EcsIn},
 	}});
 
@@ -151,16 +155,16 @@ void SpatialsImport(ecs_world_t *world)
 	.callback = Transform_Make,
 	.query.terms = {
 	{.id = ecs_id(SpatialsTransform2), .inout = EcsOut},
-	{.id = ecs_id(SpatialsRotationWorld), .inout = EcsIn},
+	{.id = ecs_id(SpatialsRotation), .inout = EcsIn},
 	}});
 
 	ecs_system(world,
 	{.entity = ecs_entity(world, {.name = "Position2_Cascade", .add = ecs_ids(ecs_dependson(EcsPreUpdate))}),
 	.callback = Position2_Cascade,
 	.query.terms = {
-	{.id = ecs_id(SpatialsPosition2World), .inout = EcsOut},
-	{.id = ecs_id(SpatialsPosition2Local), .inout = EcsIn},
-	{.id = ecs_id(SpatialsPosition2World), .src.id = EcsCascade, .inout = EcsIn, .oper = EcsOptional},
+	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsOut},
+	{.id = ecs_id(SpatialsPosition2), .inout = EcsIn},
+	{.id = ecs_id(SpatialsWorldPosition2), .src.id = EcsCascade, .inout = EcsIn, .oper = EcsOptional},
 	{.id = ecs_id(SpatialsTransform2), .src.id = EcsUp, .inout = EcsIn, .oper = EcsOptional},
 	}});
 
@@ -168,8 +172,8 @@ void SpatialsImport(ecs_world_t *world)
 	{.entity = ecs_entity(world, {.name = "Rotation_Cascade", .add = ecs_ids(ecs_dependson(EcsPreUpdate))}),
 	.callback = Rotation_Cascade,
 	.query.terms = {
-	{.id = ecs_id(SpatialsRotationWorld), .inout = EcsOut},
-	{.id = ecs_id(SpatialsRotationLocal), .inout = EcsIn},
-	{.id = ecs_id(SpatialsRotationWorld), .src.id = EcsCascade, .inout = EcsIn, .oper = EcsOptional},
+	{.id = ecs_id(SpatialsWorldRotation), .inout = EcsOut},
+	{.id = ecs_id(SpatialsRotation), .inout = EcsIn},
+	{.id = ecs_id(SpatialsWorldRotation), .src.id = EcsCascade, .inout = EcsIn, .oper = EcsOptional},
 	}});
 }

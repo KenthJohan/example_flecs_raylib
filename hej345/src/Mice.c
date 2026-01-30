@@ -10,7 +10,7 @@ static void Test_Collision_Rectangle(ecs_iter_t *it)
 {
 	MicePosition const *m = ecs_field(it, MicePosition, 0);                     // singleton, in
 	SpatialsTransform2 const *t = ecs_field(it, SpatialsTransform2, 1);         // self, in
-	SpatialsPosition2World const *p = ecs_field(it, SpatialsPosition2World, 2); // self, in
+	SpatialsWorldPosition2 const *p = ecs_field(it, SpatialsWorldPosition2, 2); // self, in
 	ShapesRectangle const *r = ecs_field(it, ShapesRectangle, 3);               // self, in
 
 	for (int i = 0; i < it->count; ++i, ++t, ++p, ++r) {
@@ -43,7 +43,7 @@ static void Test_Collision_Circle(ecs_iter_t *it)
 {
 	MicePosition const *m = ecs_field(it, MicePosition, 0);                     // singleton, in
 	SpatialsTransform2 const *t = ecs_field(it, SpatialsTransform2, 1);         // self, in
-	SpatialsPosition2World const *p = ecs_field(it, SpatialsPosition2World, 2); // self, in
+	SpatialsWorldPosition2 const *p = ecs_field(it, SpatialsWorldPosition2, 2); // self, in
 	ShapesCircle const *c = ecs_field(it, ShapesCircle, 3);               // self, in
 
 	for (int i = 0; i < it->count; ++i, ++t, ++p, ++c) {
@@ -106,7 +106,7 @@ void MiceImport(ecs_world_t *world)
 	.query.terms = {
 	{.id = ecs_id(MicePosition), .src.id = ecs_id(MicePosition), .inout = EcsIn},
 	{.id = ecs_id(SpatialsTransform2), .src.id = EcsUp, .inout = EcsIn},
-	{.id = ecs_id(SpatialsPosition2World), .inout = EcsIn},
+	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
 	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
 	}});
 
@@ -116,7 +116,7 @@ void MiceImport(ecs_world_t *world)
 	.query.terms = {
 	{.id = ecs_id(MicePosition), .src.id = ecs_id(MicePosition), .inout = EcsIn},
 	{.id = ecs_id(SpatialsTransform2), .src.id = EcsUp, .inout = EcsIn},
-	{.id = ecs_id(SpatialsPosition2World), .inout = EcsIn},
+	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
 	{.id = ecs_id(ShapesCircle), .inout = EcsIn},
 	}});
 

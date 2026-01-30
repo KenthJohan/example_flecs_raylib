@@ -113,6 +113,7 @@ int main(void)
 	const int screenHeight = 450;
 
 	InitWindow(screenWidth, screenHeight, "raylib [core] example - 2d camera mouse zoom");
+	SetWindowState(FLAG_WINDOW_RESIZABLE);
 
 	Camera2D camera = {0};
 	camera.zoom = 1.0f;
@@ -154,6 +155,11 @@ int main(void)
 			// Uses log scaling to provide consistent zoom speed
 			float scale = 0.2f * wheel;
 			camera.zoom = Clamp(expf(logf(camera.zoom) + scale), 0.125f, 64.0f);
+		}
+
+		if (IsKeyDown(KEY_ONE)) {
+
+			MaximizeWindow();
 		}
 
 		// Draw

@@ -8,7 +8,7 @@
 
 static void Draw_Circle(ecs_iter_t *it)
 {
-	SpatialsPosition2World *p = ecs_field(it, SpatialsPosition2World, 0); // self, in
+	SpatialsWorldPosition2 *p = ecs_field(it, SpatialsWorldPosition2, 0); // self, in
 	ShapesCircle *c = ecs_field(it, ShapesCircle, 1);                     // self, in
 	ColorsRgb *color = ecs_field(it, ColorsRgb, 2);                       // self, in
 	for (int i = 0; i < it->count; ++i, ++p, ++c, ++color) {
@@ -18,7 +18,7 @@ static void Draw_Circle(ecs_iter_t *it)
 
 static void Draw_Rectangle(ecs_iter_t *it)
 {
-	SpatialsPosition2World *p = ecs_field(it, SpatialsPosition2World, 0); // self, in
+	SpatialsWorldPosition2 *p = ecs_field(it, SpatialsWorldPosition2, 0); // self, in
 	ShapesRectangle *r = ecs_field(it, ShapesRectangle, 1);               // self, in
 	ColorsRgb *color = ecs_field(it, ColorsRgb, 2);                       // self, in
 	for (int i = 0; i < it->count; ++i, ++p, ++r, ++color) {
@@ -76,7 +76,7 @@ void SpatialsVector2_draw(SpatialsVector2 *v, int count, Color color)
 
 static void Draw_Rectangle_Rotated(ecs_iter_t *it)
 {
-	SpatialsPosition2World *p = ecs_field(it, SpatialsPosition2World, 0); // self, in
+	SpatialsWorldPosition2 *p = ecs_field(it, SpatialsWorldPosition2, 0); // self, in
 	SpatialsTransform2 *t = ecs_field(it, SpatialsTransform2, 1);         // self, in
 	ShapesRectangle *r = ecs_field(it, ShapesRectangle, 2);               // self, in
 	ColorsRgb *color = ecs_field(it, ColorsRgb, 3);                       // self, in
@@ -91,7 +91,7 @@ static void Draw_Rectangle_Rotated(ecs_iter_t *it)
 
 static void Draw_Transform(ecs_iter_t *it)
 {
-	SpatialsPosition2World *p = ecs_field(it, SpatialsPosition2World, 0); // self, in
+	SpatialsWorldPosition2 *p = ecs_field(it, SpatialsWorldPosition2, 0); // self, in
 	SpatialsTransform2 *t = ecs_field(it, SpatialsTransform2, 1);         // self, in
 	for (int i = 0; i < it->count; ++i, ++p, ++t) {
 		DrawLineEx((Vector2){p->x, p->y}, (Vector2){p->x + t->c0[0] * 20, p->y + t->c0[1] * 20}, 2.0f, RED);   // Draw X line
@@ -111,7 +111,7 @@ void DrawsImport(ecs_world_t *world)
 	{.entity = ecs_entity(world, {.name = "Draw_Circle", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.callback = Draw_Circle,
 	.query.terms = {
-	{.id = ecs_id(SpatialsPosition2World), .inout = EcsIn},
+	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
 	{.id = ecs_id(ShapesCircle), .inout = EcsIn},
 	{.id = ecs_id(ColorsRgb), .inout = EcsIn},
 	}});
@@ -120,7 +120,7 @@ void DrawsImport(ecs_world_t *world)
 	{.entity = ecs_entity(world, {.name = "Draw_Rectangle", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.callback = Draw_Rectangle,
 	.query.terms = {
-	{.id = ecs_id(SpatialsPosition2World), .inout = EcsIn},
+	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
 	{.id = ecs_id(SpatialsTransform2), .inout = EcsIn, .oper = EcsNot},
 	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
 	{.id = ecs_id(ColorsRgb), .inout = EcsIn},
@@ -130,7 +130,7 @@ void DrawsImport(ecs_world_t *world)
 	{.entity = ecs_entity(world, {.name = "Draw_Rectangle_Rotated", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.callback = Draw_Rectangle_Rotated,
 	.query.terms = {
-	{.id = ecs_id(SpatialsPosition2World), .inout = EcsIn},
+	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
 	{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
 	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
 	{.id = ecs_id(ColorsRgb), .inout = EcsIn},
@@ -140,7 +140,7 @@ void DrawsImport(ecs_world_t *world)
 	{.entity = ecs_entity(world, {.name = "Draw_Transform", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.callback = Draw_Transform,
 	.query.terms = {
-	{.id = ecs_id(SpatialsPosition2World), .inout = EcsIn},
+	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
 	{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
 	}});
 }
