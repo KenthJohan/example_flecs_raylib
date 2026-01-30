@@ -108,7 +108,7 @@ void DrawsImport(ecs_world_t *world)
 	ECS_IMPORT(world, Colors);
 
 	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "Draw_Circle", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
+	{.entity = ecs_entity(world, {.name = "Draw_Circle", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.callback = Draw_Circle,
 	.query.terms = {
 	{.id = ecs_id(SpatialsPosition2World), .inout = EcsIn},
@@ -117,7 +117,7 @@ void DrawsImport(ecs_world_t *world)
 	}});
 
 	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "Draw_Rectangle", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
+	{.entity = ecs_entity(world, {.name = "Draw_Rectangle", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.callback = Draw_Rectangle,
 	.query.terms = {
 	{.id = ecs_id(SpatialsPosition2World), .inout = EcsIn},
@@ -127,7 +127,7 @@ void DrawsImport(ecs_world_t *world)
 	}});
 
 	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "Draw_Rectangle_Rotated", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
+	{.entity = ecs_entity(world, {.name = "Draw_Rectangle_Rotated", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.callback = Draw_Rectangle_Rotated,
 	.query.terms = {
 	{.id = ecs_id(SpatialsPosition2World), .inout = EcsIn},
@@ -137,7 +137,7 @@ void DrawsImport(ecs_world_t *world)
 	}});
 
 	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "Draw_Transform", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
+	{.entity = ecs_entity(world, {.name = "Draw_Transform", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.callback = Draw_Transform,
 	.query.terms = {
 	{.id = ecs_id(SpatialsPosition2World), .inout = EcsIn},

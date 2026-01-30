@@ -126,7 +126,7 @@ void SpatialsImport(ecs_world_t *world)
 	}});
 
 	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "Rotator", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
+	{.entity = ecs_entity(world, {.name = "Rotator", .add = ecs_ids(ecs_dependson(EcsPreUpdate))}),
 	.callback = Rotator,
 	.query.terms = {
 	{.id = ecs_id(SpatialsRotationWorld), .inout = EcsOut},
@@ -134,7 +134,7 @@ void SpatialsImport(ecs_world_t *world)
 	}});
 
 	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "Transform_Make", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
+	{.entity = ecs_entity(world, {.name = "Transform_Make", .add = ecs_ids(ecs_dependson(EcsPreUpdate))}),
 	.callback = Transform_Make,
 	.query.terms = {
 	{.id = ecs_id(SpatialsTransform2), .inout = EcsOut},
@@ -142,7 +142,7 @@ void SpatialsImport(ecs_world_t *world)
 	}});
 
 	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "Position2_Cascade", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
+	{.entity = ecs_entity(world, {.name = "Position2_Cascade", .add = ecs_ids(ecs_dependson(EcsPreUpdate))}),
 	.callback = Position2_Cascade,
 	.query.terms = {
 	{.id = ecs_id(SpatialsPosition2World), .inout = EcsOut},

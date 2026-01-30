@@ -20,7 +20,6 @@ typedef struct {
 	float radians;
 } SpatialsRotationWorld;
 
-
 typedef struct {
 	float c0[2];
 	float c1[2];
