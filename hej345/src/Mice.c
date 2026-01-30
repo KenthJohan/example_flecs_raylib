@@ -6,7 +6,7 @@
 ECS_TAG_DECLARE(MiceCollide);
 ECS_COMPONENT_DECLARE(MicePosition);
 
-static void Test_Collision(ecs_iter_t *it)
+static void Test_Collision_Rectangle(ecs_iter_t *it)
 {
 	MicePosition const *m = ecs_field(it, MicePosition, 0);                     // singleton, in
 	SpatialsTransform2 const *t = ecs_field(it, SpatialsTransform2, 1);         // self, in
@@ -35,6 +35,38 @@ static void Test_Collision(ecs_iter_t *it)
 		} else {
 			ecs_remove_id(it->world, it->entities[i], ecs_id(MiceCollide));
 		}
+	}
+}
+
+
+static void Test_Collision_Circle(ecs_iter_t *it)
+{
+	MicePosition const *m = ecs_field(it, MicePosition, 0);                     // singleton, in
+	SpatialsTransform2 const *t = ecs_field(it, SpatialsTransform2, 1);         // self, in
+	SpatialsPosition2World const *p = ecs_field(it, SpatialsPosition2World, 2); // self, in
+	ShapesCircle const *c = ecs_field(it, ShapesCircle, 3);               // self, in
+
+	for (int i = 0; i < it->count; ++i, ++t, ++p, ++c) {
+        // Transform mouse position into local space of circle
+        float sinRot = -t->c1[0]; // -sin(theta)
+        float cosRot = t->c0[0];  // cos(theta)
+
+        // Translate mouse into circle local space
+        float localX = m->x - p->x;
+        float localY = m->y - p->y;
+
+        // Rotate point back inversely relative to the circle
+        float rotatedX = cosRot * localX - sinRot * localY;
+        float rotatedY = sinRot * localX + cosRot * localY;
+
+        // Check if the local point lies within the bounds of the circle
+        bool isColliding = (rotatedX * rotatedX + rotatedY * rotatedY) <= (c->r * c->r);
+
+        if (isColliding) {
+            ecs_add_id(it->world, it->entities[i], ecs_id(MiceCollide));
+        } else {
+            ecs_remove_id(it->world, it->entities[i], ecs_id(MiceCollide));
+        }
 	}
 }
 
@@ -69,13 +101,23 @@ void MiceImport(ecs_world_t *world)
 	ecs_singleton_add(world, MicePosition);
 
 	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "Test_Collision", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
-	.callback = Test_Collision,
+	{.entity = ecs_entity(world, {.name = "Test_Collision_Rectangle", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
+	.callback = Test_Collision_Rectangle,
 	.query.terms = {
 	{.id = ecs_id(MicePosition), .src.id = ecs_id(MicePosition), .inout = EcsIn},
 	{.id = ecs_id(SpatialsTransform2), .src.id = EcsUp, .inout = EcsIn},
 	{.id = ecs_id(SpatialsPosition2World), .inout = EcsIn},
 	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
+	}});
+
+	ecs_system(world,
+	{.entity = ecs_entity(world, {.name = "Test_Collision_Circle", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
+	.callback = Test_Collision_Circle,
+	.query.terms = {
+	{.id = ecs_id(MicePosition), .src.id = ecs_id(MicePosition), .inout = EcsIn},
+	{.id = ecs_id(SpatialsTransform2), .src.id = EcsUp, .inout = EcsIn},
+	{.id = ecs_id(SpatialsPosition2World), .inout = EcsIn},
+	{.id = ecs_id(ShapesCircle), .inout = EcsIn},
 	}});
 
 	ecs_system(world,
