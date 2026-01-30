@@ -1,0 +1,16 @@
+
+world  {
+    spatials.Position2World : {0, 0}
+    a1  {
+        spatials.Rectangle : {20, 20}
+        spatials.Position2World
+        spatials.Position2Local : {100, -20}
+        a1  {
+            spatials.Circle : {30}
+            spatials.Position2World
+            spatials.Position2Local : {0, 0}
+        }
+    }
+}
+
+
