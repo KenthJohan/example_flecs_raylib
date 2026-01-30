@@ -1,36 +1,41 @@
+using colors
+using shapes
+using spatials
+
 
 const DEG2RAD: 0.017453292519943295769236907684886
 
 
 
-prefab transform {
-    spatials.WorldPosition2 : {0, 0}
-    spatials.WorldRotation : {0}
-    spatials.Transform2
+prefab wtransform {
+    WorldPosition2 : {0, 0}
+    WorldRotation : {0}
+    WorldRgb : {0.5, 0.5, 0.5}
+    Transform2
 }
 
-world : transform {
-    spatials.Rotation : {0}
-    shapes.Circle : {10}
-    colors.Rgb : {111, 0, 55}
-    a1 : transform {
-        shapes.Rectangle : {20, 20}
-        colors.Rgb : {255, 50, 0}
-        spatials.Position2 : {100, -20}
-        spatials.Rotation : {45 * DEG2RAD}
-        spatials.Omega : {1 * DEG2RAD}
-        a1 : transform {
-            shapes.Circle : {30}
-            colors.Rgb : {33, 50, 99}
-            spatials.Position2 : {100, 0}
-            spatials.Rotation : {0}
-            spatials.Omega : {5 * DEG2RAD}
-            a1 : transform {
-                shapes.Circle : {10}
-                colors.Rgb : {0, 200, 150}
-                spatials.Position2 : {50, 0}
-                spatials.Rotation : {0}
-                spatials.Omega : {2 * DEG2RAD}
+world : wtransform {
+    Rotation : {0}
+    Circle : {10}
+    Rgb : {111, 0, 55}
+    a1 : wtransform {
+        Position2 : {100, -20}
+        Rotation : {45 * DEG2RAD}
+        Omega : {1 * DEG2RAD}
+        Rectangle : {20, 20}
+        Rgb : {255, 50, 0}
+        a1 : wtransform {
+            Position2 : {100, 0}
+            Rotation : {0}
+            Omega : {5 * DEG2RAD}
+            Circle : {30}
+            Rgb : {33, 50, 99}
+            a1 : wtransform {
+                Position2 : {50, 0}
+                Rotation : {0}
+                Omega : {2 * DEG2RAD}
+                Circle : {10}
+                Rgb : {0, 200, 150}
             }
         }
     }

@@ -2,6 +2,7 @@
 #include "Spatials.h"
 #include "Shapes.h"
 #include "Colors.h"
+#include "Mice.h"
 #include "raylib.h"
 #include "rlgl.h"
 #include <math.h>
@@ -10,7 +11,7 @@ static void Draw_Circle(ecs_iter_t *it)
 {
 	SpatialsWorldPosition2 *p = ecs_field(it, SpatialsWorldPosition2, 0); // self, in
 	ShapesCircle *c = ecs_field(it, ShapesCircle, 1);                     // self, in
-	ColorsRgb *color = ecs_field(it, ColorsRgb, 2);                       // self, in
+	ColorsWorldRgb *color = ecs_field(it, ColorsWorldRgb, 2);             // self, in
 	for (int i = 0; i < it->count; ++i, ++p, ++c, ++color) {
 		DrawCircleV((Vector2){p->x, p->y}, c->r, (Color){color->r, color->g, color->b, 255});
 	}
@@ -20,7 +21,7 @@ static void Draw_Rectangle(ecs_iter_t *it)
 {
 	SpatialsWorldPosition2 *p = ecs_field(it, SpatialsWorldPosition2, 0); // self, in
 	ShapesRectangle *r = ecs_field(it, ShapesRectangle, 1);               // self, in
-	ColorsRgb *color = ecs_field(it, ColorsRgb, 2);                       // self, in
+	ColorsWorldRgb *color = ecs_field(it, ColorsWorldRgb, 2);             // self, in
 	for (int i = 0; i < it->count; ++i, ++p, ++r, ++color) {
 		// DrawRectangleV((Vector2){p->x - r->w / 2, p->y - r->h / 2}, (Vector2){r->w, r->h}, BLUE);
 		// DrawLineEx((Vector2){p->x, p->y}, (Vector2){p->x + r->w, p->y}, 1.0f, RED);   // Draw X line
@@ -79,13 +80,27 @@ static void Draw_Rectangle_Rotated(ecs_iter_t *it)
 	SpatialsWorldPosition2 *p = ecs_field(it, SpatialsWorldPosition2, 0); // self, in
 	SpatialsTransform2 *t = ecs_field(it, SpatialsTransform2, 1);         // self, in
 	ShapesRectangle *r = ecs_field(it, ShapesRectangle, 2);               // self, in
-	ColorsRgb *color = ecs_field(it, ColorsRgb, 3);                       // self, in
+	ColorsWorldRgb *color = ecs_field(it, ColorsWorldRgb, 3);             // self, in
 	for (int i = 0; i < it->count; ++i, ++p, ++r, ++t, ++color) {
 		SpatialsVector2 vertices[6] = {0};
-		generate_6vertices_rectangle(vertices, r->w, r->h);
-		SpatialsTransform2_transform_points(t, vertices, 6);
-		SpatialsVector2_translate(vertices, 6, (SpatialsVector2){p->x, p->y});
-		SpatialsVector2_draw(vertices, 6, (Color){color->r, color->g, color->b, 255});
+		float padding = 4.0f;
+		if (ecs_has(it->world, it->entities[i], MiceToggle)) {
+
+			generate_6vertices_rectangle(vertices, r->w, r->h);
+			SpatialsTransform2_transform_points(t, vertices, 6);
+			SpatialsVector2_translate(vertices, 6, (SpatialsVector2){p->x, p->y});
+			SpatialsVector2_draw(vertices, 6, (Color){~color->r, ~color->g, ~color->b, 255});
+
+			generate_6vertices_rectangle(vertices, r->w-padding, r->h-padding);
+			SpatialsTransform2_transform_points(t, vertices, 6);
+			SpatialsVector2_translate(vertices, 6, (SpatialsVector2){p->x, p->y});
+			SpatialsVector2_draw(vertices, 6, (Color){color->r, color->g, color->b, 255});
+		} else {
+			generate_6vertices_rectangle(vertices, r->w, r->h);
+			SpatialsTransform2_transform_points(t, vertices, 6);
+			SpatialsVector2_translate(vertices, 6, (SpatialsVector2){p->x, p->y});
+			SpatialsVector2_draw(vertices, 6, (Color){color->r, color->g, color->b, 255});
+		}
 	}
 }
 
@@ -113,7 +128,7 @@ void DrawsImport(ecs_world_t *world)
 	.query.terms = {
 	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
 	{.id = ecs_id(ShapesCircle), .inout = EcsIn},
-	{.id = ecs_id(ColorsRgb), .inout = EcsIn},
+	{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
 	}});
 
 	ecs_system(world,
@@ -123,7 +138,7 @@ void DrawsImport(ecs_world_t *world)
 	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
 	{.id = ecs_id(SpatialsTransform2), .inout = EcsIn, .oper = EcsNot},
 	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
-	{.id = ecs_id(ColorsRgb), .inout = EcsIn},
+	{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
 	}});
 
 	ecs_system(world,
@@ -133,7 +148,7 @@ void DrawsImport(ecs_world_t *world)
 	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
 	{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
 	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
-	{.id = ecs_id(ColorsRgb), .inout = EcsIn},
+	{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
 	}});
 
 	ecs_system(world,

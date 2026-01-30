@@ -187,7 +187,15 @@ int main(void)
 		EndMode2D();
 
         Vector2 mousePosWorld = GetScreenToWorld2D(GetMousePosition(), camera);
-		ecs_singleton_set(world, MicePosition, {mousePosWorld.x, mousePosWorld.y});
+		uint32_t pressed = 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ? 1 << MOUSE_BUTTON_LEFT : 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) ? 1 << MOUSE_BUTTON_RIGHT : 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) ? 1 << MOUSE_BUTTON_MIDDLE : 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_SIDE) ? 1 << MOUSE_BUTTON_SIDE : 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_EXTRA) ? 1 << MOUSE_BUTTON_EXTRA : 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_FORWARD) ? 1 << MOUSE_BUTTON_FORWARD : 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_BACK) ? 1 << MOUSE_BUTTON_BACK : 0;
+		ecs_singleton_set(world, MicePosition, {mousePosWorld.x, mousePosWorld.y, pressed});
 
 
         bool isMouseOver = CheckCollisionPointRotatedRect(mousePosWorld, (Vector2){rec01.x, rec01.y}, rec01.width, rec01.height, angle);
