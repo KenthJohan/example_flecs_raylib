@@ -2,8 +2,6 @@
 
 ECS_COMPONENT_DECLARE(SpatialsPosition2Local);
 ECS_COMPONENT_DECLARE(SpatialsPosition2World);
-ECS_COMPONENT_DECLARE(SpatialsRectangle);
-ECS_COMPONENT_DECLARE(SpatialsCircle);
 
 static void Position2_Cascade(ecs_iter_t *it)
 {
@@ -27,8 +25,6 @@ void SpatialsImport(ecs_world_t *world)
 
 	ECS_COMPONENT_DEFINE(world, SpatialsPosition2Local);
 	ECS_COMPONENT_DEFINE(world, SpatialsPosition2World);
-	ECS_COMPONENT_DEFINE(world, SpatialsRectangle);
-    ECS_COMPONENT_DEFINE(world, SpatialsCircle);
 
 	ecs_struct(world,
 	{.entity = ecs_id(SpatialsPosition2Local),
@@ -42,19 +38,6 @@ void SpatialsImport(ecs_world_t *world)
 	.members = {
 	{.name = "x", .type = ecs_id(ecs_f32_t)},
 	{.name = "y", .type = ecs_id(ecs_f32_t)},
-	}});
-
-	ecs_struct(world,
-	{.entity = ecs_id(SpatialsRectangle),
-	.members = {
-	{.name = "w", .type = ecs_id(ecs_f32_t)},
-	{.name = "h", .type = ecs_id(ecs_f32_t)},
-	}});
-
-	ecs_struct(world,
-	{.entity = ecs_id(SpatialsCircle),
-	.members = {
-	{.name = "r", .type = ecs_id(ecs_f32_t)},
 	}});
 
 	ecs_system(world,

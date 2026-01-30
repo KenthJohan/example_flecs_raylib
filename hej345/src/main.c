@@ -7,16 +7,13 @@
 #include "raygui.h" // Required for GUI controls
 
 #include "Spatials.h"
+#include "Shapes.h"
 #include "Draws.h"
 
 // include header for getcwd
 #include <unistd.h>
 #include <limits.h> // For PATH_MAX
 
-typedef struct {
-    float x;
-    float y;
-} Position;
 
 void DrawRectangleProRotates(Vector2 position, float w, float h, float rotation, Color color)
 {
@@ -68,6 +65,7 @@ int main(void)
 	ECS_IMPORT(world, FlecsDoc);
 	ECS_IMPORT(world, FlecsStats);
 	ECS_IMPORT(world, Spatials);
+	ECS_IMPORT(world, Shapes);
 	ECS_IMPORT(world, Draws);
 	ecs_set(world, EcsWorld, EcsRest, {.port = 0});
 	printf("Remote: %s\n", "https://www.flecs.dev/explorer/?remote=true");
