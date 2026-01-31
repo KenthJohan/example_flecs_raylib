@@ -6,7 +6,6 @@ using spatials
 const DEG2RAD: 0.017453292519943295769236907684886
 
 
-
 prefab wtransform {
     WorldPosition2 : {0, 0}
     WorldRotation : {0}
@@ -14,7 +13,41 @@ prefab wtransform {
     Transform2
 }
 
+
+template Car {  
+    prop w: 200
+    prop h: 20
+    prop d: 5
+    chassis : wtransform {
+        Position2: {0, 0}
+        Rotation : {0}
+        Rectangle : {w, h}
+        Rgb: {88, 55, 100}
+        wheel1 : wtransform {
+            Position2: {-w/2, h}
+            Rotation : {0}
+            Rgb: {44, 55, 33}
+            Circle : {d*2}
+        }
+        wheel2 : wtransform {
+            Position2: {w/2, h}
+            Rotation : {0}
+            Rgb: {44, 55, 33}
+            Circle : {d*2}
+        }
+        r1 : wtransform {
+            Position2: {22, 22}
+            Rotation : {0}
+            Rgb: {44, 55, 33}
+            Rectangle : {20, 20}
+        }
+    }
+}
+
+
+
 world : wtransform {
+Car car()
     Rotation : {0}
     Circle : {10}
     Rgb : {111, 0, 55}

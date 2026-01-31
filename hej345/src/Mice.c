@@ -15,23 +15,16 @@ static void Test_Collision_Rectangle(ecs_iter_t *it)
 	ShapesRectangle const *r = ecs_field(it, ShapesRectangle, 3);               // self, in
 
 	for (int i = 0; i < it->count; ++i, ++t, ++p, ++r) {
-		// Transform mouse position into local space of rectangle
-		float sinRot = -t->c1[0]; // -sin(theta)
-		float cosRot = t->c0[0];  // cos(theta)
+		// Inverse transform mouse position to local space
+		float dx = m->x - p->x;
+		float dy = m->y - p->y;
+		float local_x = t->c0[0] * dx + t->c0[1] * dy;
+		float local_y = t->c1[0] * dx + t->c1[1] * dy;
 
-		// Translate mouse into rectangle local space
-		float localX = m->x - p->x;
-		float localY = m->y - p->y;
+		bool hit = (local_x >= -r->w / 2) && (local_x <= r->w / 2) &&
+		           (local_y >= -r->h / 2) && (local_y <= r->h / 2);
 
-		// Rotate point back inversely relative to the rectangle
-		float rotatedX = cosRot * localX - sinRot * localY;
-		float rotatedY = sinRot * localX + cosRot * localY;
-
-		// Check if the local point lies within the bounds of the rectangle
-		bool isColliding = (rotatedX >= -r->w / 2 && rotatedX <= r->w / 2 &&
-		                    rotatedY >= -r->h / 2 && rotatedY <= r->h / 2);
-
-		if (isColliding) {
+		if (hit) {
 			ecs_add_id(it->world, it->entities[i], ecs_id(MiceCollide));
 		} else {
 			ecs_remove_id(it->world, it->entities[i], ecs_id(MiceCollide));
@@ -42,27 +35,19 @@ static void Test_Collision_Rectangle(ecs_iter_t *it)
 static void Test_Collision_Circle(ecs_iter_t *it)
 {
 	MicePosition const *m = ecs_field(it, MicePosition, 0);                     // singleton, in
-	SpatialsTransform2 const *t = ecs_field(it, SpatialsTransform2, 1);         // self, in
-	SpatialsWorldPosition2 const *p = ecs_field(it, SpatialsWorldPosition2, 2); // self, in
-	ShapesCircle const *c = ecs_field(it, ShapesCircle, 3);                     // self, in
+	SpatialsWorldPosition2 const *p = ecs_field(it, SpatialsWorldPosition2, 1); // self, in
+	ShapesCircle const *c = ecs_field(it, ShapesCircle, 2);                     // self, in
 
-	for (int i = 0; i < it->count; ++i, ++t, ++p, ++c) {
-		// Transform mouse position into local space of circle
-		float sinRot = -t->c1[0]; // -sin(theta)
-		float cosRot = t->c0[0];  // cos(theta)
+	for (int i = 0; i < it->count; ++i, ++p, ++c) {
+		// Calculate distance between mouse and circle center
+		float dx = m->x - p->x;
+		float dy = m->y - p->y;
+		float d2 = dx * dx + dy * dy;
+		float r2 = c->r * c->r;
 
-		// Translate mouse into circle local space
-		float localX = m->x - p->x;
-		float localY = m->y - p->y;
+		bool hit = d2 <= r2;
 
-		// Rotate point back inversely relative to the circle
-		float rotatedX = cosRot * localX - sinRot * localY;
-		float rotatedY = sinRot * localX + cosRot * localY;
-
-		// Check if the local point lies within the bounds of the circle
-		bool isColliding = (rotatedX * rotatedX + rotatedY * rotatedY) <= (c->r * c->r);
-
-		if (isColliding) {
+		if (hit) {
 			ecs_add_id(it->world, it->entities[i], ecs_id(MiceCollide));
 		} else {
 			ecs_remove_id(it->world, it->entities[i], ecs_id(MiceCollide));
@@ -137,7 +122,7 @@ void MiceImport(ecs_world_t *world)
 	.callback = Test_Collision_Rectangle,
 	.query.terms = {
 	{.id = ecs_id(MicePosition), .src.id = ecs_id(MicePosition), .inout = EcsIn},
-	{.id = ecs_id(SpatialsTransform2), .src.id = EcsUp, .inout = EcsIn},
+	{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
 	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
 	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
 	}});
@@ -147,7 +132,6 @@ void MiceImport(ecs_world_t *world)
 	.callback = Test_Collision_Circle,
 	.query.terms = {
 	{.id = ecs_id(MicePosition), .src.id = ecs_id(MicePosition), .inout = EcsIn},
-	{.id = ecs_id(SpatialsTransform2), .src.id = EcsUp, .inout = EcsIn},
 	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
 	{.id = ecs_id(ShapesCircle), .inout = EcsIn},
 	}});
