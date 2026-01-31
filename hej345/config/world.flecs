@@ -46,8 +46,10 @@ template Car {
 
 
 
-world : wtransform {
-Car car()
+origin : wtransform {
+
+    Car car()
+
     Rotation : {0}
     Circle : {10}
     Rgb : {111, 0, 55}
@@ -60,13 +62,13 @@ Car car()
         a1 : wtransform {
             Position2 : {100, 0}
             Rotation : {0}
-            Omega : {5 * DEG2RAD}
+            //Omega : {5 * DEG2RAD}
             Circle : {30}
             Rgb : {33, 50, 99}
             a1 : wtransform {
                 Position2 : {50, 0}
                 Rotation : {0}
-                Omega : {2 * DEG2RAD}
+                //Omega : {2 * DEG2RAD}
                 Circle : {10}
                 Rgb : {0, 200, 150}
             }

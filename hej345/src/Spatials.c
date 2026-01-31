@@ -155,7 +155,7 @@ void SpatialsImport(ecs_world_t *world)
 	.callback = Transform_Make,
 	.query.terms = {
 	{.id = ecs_id(SpatialsTransform2), .inout = EcsOut},
-	{.id = ecs_id(SpatialsRotation), .inout = EcsIn},
+	{.id = ecs_id(SpatialsWorldRotation), .inout = EcsIn},
 	}});
 
 	ecs_system(world,
