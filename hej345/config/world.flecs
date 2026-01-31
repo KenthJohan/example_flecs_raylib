@@ -6,11 +6,20 @@ using spatials
 const DEG2RAD: 0.017453292519943295769236907684886
 
 
+canvas1 {
+    draws.RaylibCanvas
+}
+
+
 prefab wtransform {
     WorldPosition2 : {0, 0}
-    WorldRotation : {0}
+    WorldRotation : {0 * DEG2RAD}
     WorldRgb : {0.5, 0.5, 0.5}
     Transform2
+}
+
+prefab object : wtransform{
+    (draws.Group, canvas1)
 }
 
 
@@ -18,24 +27,24 @@ template Car {
     prop w: 200
     prop h: 20
     prop d: 5
-    chassis : wtransform {
+    chassis : object {
         Position2: {0, 0}
         Rotation : {0}
         Rectangle : {w, h}
         Rgb: {88, 55, 100}
-        wheel1 : wtransform {
+        wheel1 : object {
             Position2: {-w/2, h}
             Rotation : {0}
             Rgb: {44, 55, 33}
             Circle : {d*2}
         }
-        wheel2 : wtransform {
+        wheel2 : object {
             Position2: {w/2, h}
             Rotation : {0}
             Rgb: {44, 55, 33}
             Circle : {d*2}
         }
-        r1 : wtransform {
+        r1 : object {
             Position2: {22, 22}
             Rotation : {0}
             Rgb: {44, 55, 33}
@@ -46,26 +55,26 @@ template Car {
 
 
 
-origin : wtransform {
+origin : object {
 
     Car car()
 
     Rotation : {0}
     Circle : {10}
     Rgb : {111, 0, 55}
-    a1 : wtransform {
+    a1 : object {
         Position2 : {100, -20}
         Rotation : {45 * DEG2RAD}
         Omega : {1 * DEG2RAD}
         Rectangle : {20, 20}
         Rgb : {255, 50, 0}
-        a1 : wtransform {
+        a1 : object {
             Position2 : {100, 0}
             Rotation : {0}
             //Omega : {5 * DEG2RAD}
             Circle : {30}
             Rgb : {33, 50, 99}
-            a1 : wtransform {
+            a1 : object {
                 Position2 : {50, 0}
                 Rotation : {0}
                 //Omega : {2 * DEG2RAD}

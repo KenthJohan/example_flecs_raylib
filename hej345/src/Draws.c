@@ -5,7 +5,56 @@
 #include "Mice.h"
 #include "raylib.h"
 #include "rlgl.h"
+#include "raymath.h"
 #include <math.h>
+
+typedef struct {
+	RenderTexture render;
+	Camera2D camera;
+	ecs_query_t *query_circles;
+	ecs_query_t *query_rectangles;
+	ecs_query_t *query_transforms;
+} DrawsRaylibCanvas;
+
+ECS_COMPONENT_DECLARE(DrawsRaylibCanvas);
+
+ECS_TAG_DECLARE(DrawsGroup);
+
+static void Observer_DrawsRaylibCanvas(ecs_iter_t *it)
+{
+	ecs_world_t *world = it->world;
+	DrawsRaylibCanvas *c = ecs_field(it, DrawsRaylibCanvas, 0); // self, in
+	for (int i = 0; i < it->count; ++i, ++c) {
+		if (it->event == EcsOnAdd) {
+			c->render = LoadRenderTexture(800, 450);
+			c->camera = (Camera2D){0};
+			c->query_circles = ecs_query_init(world,
+			&(ecs_query_desc_t){
+			.terms = {
+			{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
+			{.id = ecs_id(ShapesCircle), .inout = EcsIn},
+			{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
+			}});
+			c->query_rectangles = ecs_query_init(world,
+			&(ecs_query_desc_t){
+			.terms = {
+			{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
+			{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
+			{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
+			{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
+			}});
+			c->query_transforms = ecs_query_init(world,
+			&(ecs_query_desc_t){
+			.terms = {
+			{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
+			{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
+			}});
+			c->camera.zoom = 1.0f;
+		} else if (it->event == EcsOnRemove) {
+			UnloadRenderTexture(c->render);
+		}
+	}
+}
 
 static void Draw_Circle(ecs_iter_t *it)
 {
@@ -14,18 +63,6 @@ static void Draw_Circle(ecs_iter_t *it)
 	ColorsWorldRgb *color = ecs_field(it, ColorsWorldRgb, 2);             // self, in
 	for (int i = 0; i < it->count; ++i, ++p, ++c, ++color) {
 		DrawCircleV((Vector2){p->x, p->y}, c->r, (Color){color->r, color->g, color->b, 255});
-	}
-}
-
-static void Draw_Rectangle(ecs_iter_t *it)
-{
-	SpatialsWorldPosition2 *p = ecs_field(it, SpatialsWorldPosition2, 0); // self, in
-	ShapesRectangle *r = ecs_field(it, ShapesRectangle, 1);               // self, in
-	ColorsWorldRgb *color = ecs_field(it, ColorsWorldRgb, 2);             // self, in
-	for (int i = 0; i < it->count; ++i, ++p, ++r, ++color) {
-		// DrawRectangleV((Vector2){p->x - r->w / 2, p->y - r->h / 2}, (Vector2){r->w, r->h}, BLUE);
-		// DrawLineEx((Vector2){p->x, p->y}, (Vector2){p->x + r->w, p->y}, 1.0f, RED);   // Draw X line
-		// DrawLineEx((Vector2){p->x, p->y}, (Vector2){p->x, p->y - r->h}, 1.0f, GREEN); // Draw Y line
 	}
 }
 
@@ -75,7 +112,7 @@ void SpatialsVector2_draw(SpatialsVector2 *v, int count, Color color)
 	rlEnd();
 }
 
-static void Draw_Rectangle_Rotated(ecs_iter_t *it)
+static void Draw_Rectangle(ecs_iter_t *it)
 {
 	SpatialsWorldPosition2 *p = ecs_field(it, SpatialsWorldPosition2, 0); // self, in
 	SpatialsTransform2 *t = ecs_field(it, SpatialsTransform2, 1);         // self, in
@@ -91,7 +128,7 @@ static void Draw_Rectangle_Rotated(ecs_iter_t *it)
 			SpatialsVector2_translate(vertices, 6, (SpatialsVector2){p->x, p->y});
 			SpatialsVector2_draw(vertices, 6, (Color){~color->r, ~color->g, ~color->b, 255});
 
-			generate_6vertices_rectangle(vertices, r->w-padding, r->h-padding);
+			generate_6vertices_rectangle(vertices, r->w - padding, r->h - padding);
 			SpatialsTransform2_transform_points(t, vertices, 6);
 			SpatialsVector2_translate(vertices, 6, (SpatialsVector2){p->x, p->y});
 			SpatialsVector2_draw(vertices, 6, (Color){color->r, color->g, color->b, 255});
@@ -114,48 +151,128 @@ static void Draw_Transform(ecs_iter_t *it)
 	}
 }
 
+static void DrawsRaylibCanvas_Update(ecs_iter_t *it)
+{
+	ecs_world_t *world = it->world;
+	DrawsRaylibCanvas *c = ecs_field(it, DrawsRaylibCanvas, 0); // self, in
+	for (int i = 0; i < it->count; ++i, ++c) {
+
+		// Translate based on mouse right click
+		if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
+			Vector2 delta = GetMouseDelta();
+			delta = Vector2Scale(delta, -1.0f / c->camera.zoom);
+			c->camera.target = Vector2Add(c->camera.target, delta);
+		}
+
+		// Zoom based on mouse wheel
+		float wheel = GetMouseWheelMove();
+		if (wheel != 0) {
+			// Get the world point that is under the mouse
+			Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), c->camera);
+			// Set the offset to where the mouse is
+			c->camera.offset = GetMousePosition();
+			// Set the target to match, so that the camera maps the world space point
+			// under the cursor to the screen space point under the cursor at any zoom
+			c->camera.target = mouseWorldPos;
+			// Zoom increment
+			// Uses log scaling to provide consistent zoom speed
+			float scale = 0.2f * wheel;
+			c->camera.zoom = Clamp(expf(logf(c->camera.zoom) + scale), 0.125f, 64.0f);
+		}
+
+		BeginTextureMode(c->render);
+		ClearBackground(RAYWHITE);
+		BeginMode2D(c->camera);
+
+		// Draw the 3d grid, rotated 90 degrees and centered around 0,0
+		// just so we have something in the XY plane
+		rlPushMatrix();
+		rlTranslatef(0, 25 * 50, 0);
+		rlRotatef(90, 1, 0, 0);
+		DrawGrid(100, 50);
+		rlPopMatrix();
+
+		ecs_iter_t it2;
+		it2 = ecs_query_iter(world, c->query_circles);
+		while (ecs_query_next(&it2)) {
+			Draw_Circle(&it2);
+		}
+		it2 = ecs_query_iter(world, c->query_rectangles);
+		while (ecs_query_next(&it2)) {
+			Draw_Rectangle(&it2);
+		}
+		it2 = ecs_query_iter(world, c->query_transforms);
+		while (ecs_query_next(&it2)) {
+			Draw_Transform(&it2);
+		}
+		EndMode2D();
+		EndTextureMode();
+	}
+}
+
+static void DrawsRaylibCanvas_Draw(ecs_iter_t *it)
+{
+	BeginDrawing();
+	ClearBackground(BLACK);
+	ecs_world_t *world = it->world;
+
+	while (ecs_query_next(it)) {
+		DrawsRaylibCanvas *c = ecs_field(it, DrawsRaylibCanvas, 0); // self, in
+		for (int i = 0; i < it->count; ++i, ++c) {
+
+			Rectangle splitScreenRect = {0.0f, 0.0f, (float)c->render.texture.width, (float)-c->render.texture.height};
+			DrawTextureRec(c->render.texture, splitScreenRect, (Vector2){0, 0}, WHITE);
+
+			Vector2 mousePosWorld = GetScreenToWorld2D(GetMousePosition(), c->camera);
+			uint32_t pressed = 0;
+			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ? 1 << MOUSE_BUTTON_LEFT : 0;
+			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) ? 1 << MOUSE_BUTTON_RIGHT : 0;
+			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) ? 1 << MOUSE_BUTTON_MIDDLE : 0;
+			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_SIDE) ? 1 << MOUSE_BUTTON_SIDE : 0;
+			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_EXTRA) ? 1 << MOUSE_BUTTON_EXTRA : 0;
+			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_FORWARD) ? 1 << MOUSE_BUTTON_FORWARD : 0;
+			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_BACK) ? 1 << MOUSE_BUTTON_BACK : 0;
+			ecs_singleton_set(world, MicePosition, {mousePosWorld.x, mousePosWorld.y, pressed});
+		}
+	}
+
+	DrawRectangle(GetScreenWidth() / 2 - 2, 0, 4, GetScreenHeight(), LIGHTGRAY);
+
+	EndDrawing();
+}
+
 void DrawsImport(ecs_world_t *world)
 {
 	ECS_MODULE(world, Draws);
-	ecs_set_name_prefix(world, "Draws");
 	ECS_IMPORT(world, Spatials);
 	ECS_IMPORT(world, Shapes);
 	ECS_IMPORT(world, Colors);
+	ecs_set_name_prefix(world, "Draws");
 
-	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "Draw_Circle", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
-	.callback = Draw_Circle,
+	ECS_TAG_DEFINE(world, DrawsGroup);
+	ECS_COMPONENT_DEFINE(world, DrawsRaylibCanvas);
+
+	ecs_observer_init(world,
+	&(ecs_observer_desc_t){// Observer query. Uses same ecs_query_desc_t as systems/queries
+	.query = {.terms = {{.id = ecs_id(DrawsRaylibCanvas)}}},
+	// Events the observer will listen for. Can contain multiple events
+	.events = {EcsOnAdd, EcsOnRemove},
+	// Observer callback
+	.callback = Observer_DrawsRaylibCanvas});
+
+	ecs_system_init(world,
+	&(ecs_system_desc_t){
+	.entity = ecs_entity(world, {.name = "DrawsRaylibCanvas_Update", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
+	.callback = DrawsRaylibCanvas_Update,
 	.query.terms = {
-	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
-	{.id = ecs_id(ShapesCircle), .inout = EcsIn},
-	{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
+	{.id = ecs_id(DrawsRaylibCanvas), .inout = EcsIn},
 	}});
 
-	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "Draw_Rectangle", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
-	.callback = Draw_Rectangle,
+	ecs_system_init(world,
+	&(ecs_system_desc_t){
+	.entity = ecs_entity(world, {.name = "DrawsRaylibCanvas_Draw", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
+	.run = DrawsRaylibCanvas_Draw,
 	.query.terms = {
-	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
-	{.id = ecs_id(SpatialsTransform2), .inout = EcsIn, .oper = EcsNot},
-	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
-	{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
-	}});
-
-	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "Draw_Rectangle_Rotated", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
-	.callback = Draw_Rectangle_Rotated,
-	.query.terms = {
-	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
-	{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
-	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
-	{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
-	}});
-
-	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "Draw_Transform", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
-	.callback = Draw_Transform,
-	.query.terms = {
-	{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
-	{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
+	{.id = ecs_id(DrawsRaylibCanvas), .inout = EcsIn},
 	}});
 }
