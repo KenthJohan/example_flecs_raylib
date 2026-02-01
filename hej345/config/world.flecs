@@ -6,6 +6,7 @@ using spatials
 const DEG2RAD: 0.017453292519943295769236907684886
 
 
+
 canvas1 {
     draws.CanvasCreate
     Rectangle : {400, 300}

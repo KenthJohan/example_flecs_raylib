@@ -123,7 +123,6 @@ void MiceImport(ecs_world_t *world)
 	{.name = "y", .type = ecs_id(ecs_f32_t)},
 	}});
 
-	ecs_singleton_add(world, MicePosition);
 
 	ecs_system(world,
 	{.entity = ecs_entity(world, {.name = "Test_Collision_Rectangle", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),

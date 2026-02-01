@@ -6,6 +6,7 @@
 #include "raylib.h"
 #include "rlgl.h"
 #include "raymath.h"
+#include "PlatformRaylib.h"
 #include <math.h>
 
 typedef struct {
@@ -153,9 +154,9 @@ static void Draw_Transform(ecs_iter_t *it)
 static void DrawsRaylibCanvas_Update(ecs_iter_t *it)
 {
 	ecs_world_t *world = it->world;
-	DrawsRaylibCanvas *c = ecs_field(it, DrawsRaylibCanvas, 0); // self, in
+	DrawsRaylibCanvas *c = ecs_field(it, DrawsRaylibCanvas, 0);  // self, in
 	MicePositionLocal *ml = ecs_field(it, MicePositionLocal, 1); // self, in
-	MicePosition *m = ecs_field(it, MicePosition, 2);           // singleton, in
+	MicePosition *m = ecs_field(it, MicePosition, 2);            // singleton, in
 	for (int i = 0; i < it->count; ++i, ++c, ++ml) {
 		// Update mouse world position
 		Vector2 wmouse = GetScreenToWorld2D((Vector2){m->x, m->y}, c->camera);
@@ -218,18 +219,14 @@ static void DrawsRaylibCanvas_Draw(ecs_iter_t *it)
 	BeginDrawing();
 	ClearBackground(BLACK);
 	ecs_world_t *world = it->world;
-
 	while (ecs_query_next(it)) {
 		DrawsRaylibCanvas *c = ecs_field(it, DrawsRaylibCanvas, 0); // self, in
 		for (int i = 0; i < it->count; ++i, ++c) {
-
 			Rectangle splitScreenRect = {0.0f, 0.0f, (float)c->render.texture.width, (float)-c->render.texture.height};
 			DrawTextureRec(c->render.texture, splitScreenRect, (Vector2){0, 0}, WHITE);
 		}
 	}
-
 	DrawRectangle(GetScreenWidth() / 2 - 2, 0, 4, GetScreenHeight(), LIGHTGRAY);
-
 	EndDrawing();
 }
 
@@ -239,6 +236,7 @@ void DrawsImport(ecs_world_t *world)
 	ECS_IMPORT(world, Spatials);
 	ECS_IMPORT(world, Shapes);
 	ECS_IMPORT(world, Colors);
+	ECS_IMPORT(world, PlatformRaylib);
 	ecs_set_name_prefix(world, "Draws");
 
 	ECS_TAG_DEFINE(world, DrawsGroup);
@@ -262,7 +260,7 @@ void DrawsImport(ecs_world_t *world)
 	.query.terms = {
 	{.id = ecs_id(DrawsRaylibCanvas), .inout = EcsIn},
 	{.id = ecs_id(MicePositionLocal), .inout = EcsIn},
-	{.id = ecs_id(MicePosition), .src.id = ecs_id(MicePosition), .inout = EcsIn},
+	{.id = ecs_id(MicePosition), .src.id = ecs_id(PlatformRaylibState), .inout = EcsIn},
 	}});
 
 	ecs_system_init(world,
