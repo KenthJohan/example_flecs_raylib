@@ -16,43 +16,42 @@ typedef struct {
 	ecs_query_t *query_transforms;
 } DrawsRaylibCanvas;
 
+ECS_COMPONENT_DECLARE(DrawsCanvasCreate);
 ECS_COMPONENT_DECLARE(DrawsRaylibCanvas);
 
 ECS_TAG_DECLARE(DrawsGroup);
 
-static void Observer_DrawsRaylibCanvas(ecs_iter_t *it)
+static void DrawsRaylibCanvas_Create(ecs_iter_t *it)
 {
 	ecs_world_t *world = it->world;
-	DrawsRaylibCanvas *c = ecs_field(it, DrawsRaylibCanvas, 0); // self, in
-	for (int i = 0; i < it->count; ++i, ++c) {
-		if (it->event == EcsOnAdd) {
-			c->render = LoadRenderTexture(800, 450);
-			c->camera = (Camera2D){0};
-			c->query_circles = ecs_query_init(world,
-			&(ecs_query_desc_t){
-			.terms = {
-			{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
-			{.id = ecs_id(ShapesCircle), .inout = EcsIn},
-			{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
-			}});
-			c->query_rectangles = ecs_query_init(world,
-			&(ecs_query_desc_t){
-			.terms = {
-			{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
-			{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
-			{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
-			{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
-			}});
-			c->query_transforms = ecs_query_init(world,
-			&(ecs_query_desc_t){
-			.terms = {
-			{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
-			{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
-			}});
-			c->camera.zoom = 1.0f;
-		} else if (it->event == EcsOnRemove) {
-			UnloadRenderTexture(c->render);
-		}
+	DrawsCanvasCreate *c = ecs_field(it, DrawsCanvasCreate, 0); // self, in
+	ShapesRectangle *r = ecs_field(it, ShapesRectangle, 1);     // self, in
+	for (int i = 0; i < it->count; ++i, ++c, ++r) {
+		DrawsRaylibCanvas *canvas = ecs_ensure(world, it->entities[i], DrawsRaylibCanvas);
+		canvas->render = LoadRenderTexture(r->w, r->h);
+		canvas->camera = (Camera2D){0};
+		canvas->query_circles = ecs_query_init(world,
+		&(ecs_query_desc_t){
+		.terms = {
+		{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
+		{.id = ecs_id(ShapesCircle), .inout = EcsIn},
+		{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
+		}});
+		canvas->query_rectangles = ecs_query_init(world,
+		&(ecs_query_desc_t){
+		.terms = {
+		{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
+		{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
+		{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
+		{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
+		}});
+		canvas->query_transforms = ecs_query_init(world,
+		&(ecs_query_desc_t){
+		.terms = {
+		{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
+		{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
+		}});
+		canvas->camera.zoom = 1.0f;
 	}
 }
 
@@ -155,28 +154,32 @@ static void DrawsRaylibCanvas_Update(ecs_iter_t *it)
 {
 	ecs_world_t *world = it->world;
 	DrawsRaylibCanvas *c = ecs_field(it, DrawsRaylibCanvas, 0); // self, in
-	for (int i = 0; i < it->count; ++i, ++c) {
+	MicePositionLocal *ml = ecs_field(it, MicePositionLocal, 1); // self, in
+	MicePosition *m = ecs_field(it, MicePosition, 2);           // singleton, in
+	for (int i = 0; i < it->count; ++i, ++c, ++ml) {
+		// Update mouse world position
+		Vector2 wmouse = GetScreenToWorld2D((Vector2){m->x, m->y}, c->camera);
+		ml->x = wmouse.x;
+		ml->y = wmouse.y;
 
 		// Translate based on mouse right click
-		if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
-			Vector2 delta = GetMouseDelta();
+		if (m->down & (1 << MOUSE_BUTTON_RIGHT)) {
+			Vector2 delta = {m->dx, m->dy};
 			delta = Vector2Scale(delta, -1.0f / c->camera.zoom);
 			c->camera.target = Vector2Add(c->camera.target, delta);
 		}
 
-		// Zoom based on mouse wheel
-		float wheel = GetMouseWheelMove();
-		if (wheel != 0) {
+		if (m->wheel != 0) {
 			// Get the world point that is under the mouse
-			Vector2 mouseWorldPos = GetScreenToWorld2D(GetMousePosition(), c->camera);
+			Vector2 mouseWorldPos = GetScreenToWorld2D((Vector2){m->x, m->y}, c->camera);
 			// Set the offset to where the mouse is
-			c->camera.offset = GetMousePosition();
+			c->camera.offset = (Vector2){m->x, m->y};
 			// Set the target to match, so that the camera maps the world space point
 			// under the cursor to the screen space point under the cursor at any zoom
 			c->camera.target = mouseWorldPos;
 			// Zoom increment
 			// Uses log scaling to provide consistent zoom speed
-			float scale = 0.2f * wheel;
+			float scale = 0.2f * m->wheel;
 			c->camera.zoom = Clamp(expf(logf(c->camera.zoom) + scale), 0.125f, 64.0f);
 		}
 
@@ -222,17 +225,6 @@ static void DrawsRaylibCanvas_Draw(ecs_iter_t *it)
 
 			Rectangle splitScreenRect = {0.0f, 0.0f, (float)c->render.texture.width, (float)-c->render.texture.height};
 			DrawTextureRec(c->render.texture, splitScreenRect, (Vector2){0, 0}, WHITE);
-
-			Vector2 mousePosWorld = GetScreenToWorld2D(GetMousePosition(), c->camera);
-			uint32_t pressed = 0;
-			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ? 1 << MOUSE_BUTTON_LEFT : 0;
-			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) ? 1 << MOUSE_BUTTON_RIGHT : 0;
-			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) ? 1 << MOUSE_BUTTON_MIDDLE : 0;
-			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_SIDE) ? 1 << MOUSE_BUTTON_SIDE : 0;
-			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_EXTRA) ? 1 << MOUSE_BUTTON_EXTRA : 0;
-			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_FORWARD) ? 1 << MOUSE_BUTTON_FORWARD : 0;
-			pressed |= IsMouseButtonPressed(MOUSE_BUTTON_BACK) ? 1 << MOUSE_BUTTON_BACK : 0;
-			ecs_singleton_set(world, MicePosition, {mousePosWorld.x, mousePosWorld.y, pressed});
 		}
 	}
 
@@ -251,14 +243,17 @@ void DrawsImport(ecs_world_t *world)
 
 	ECS_TAG_DEFINE(world, DrawsGroup);
 	ECS_COMPONENT_DEFINE(world, DrawsRaylibCanvas);
+	ECS_COMPONENT_DEFINE(world, DrawsCanvasCreate);
 
-	ecs_observer_init(world,
-	&(ecs_observer_desc_t){// Observer query. Uses same ecs_query_desc_t as systems/queries
-	.query = {.terms = {{.id = ecs_id(DrawsRaylibCanvas)}}},
-	// Events the observer will listen for. Can contain multiple events
-	.events = {EcsOnAdd, EcsOnRemove},
-	// Observer callback
-	.callback = Observer_DrawsRaylibCanvas});
+	ecs_system_init(world,
+	&(ecs_system_desc_t){
+	.entity = ecs_entity(world, {.name = "DrawsRaylibCanvas_Create", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
+	.callback = DrawsRaylibCanvas_Create,
+	.query.terms = {
+	{.id = ecs_id(DrawsCanvasCreate), .inout = EcsIn},
+	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
+	{.id = ecs_id(DrawsRaylibCanvas), .oper = EcsNot},
+	}});
 
 	ecs_system_init(world,
 	&(ecs_system_desc_t){
@@ -266,6 +261,8 @@ void DrawsImport(ecs_world_t *world)
 	.callback = DrawsRaylibCanvas_Update,
 	.query.terms = {
 	{.id = ecs_id(DrawsRaylibCanvas), .inout = EcsIn},
+	{.id = ecs_id(MicePositionLocal), .inout = EcsIn},
+	{.id = ecs_id(MicePosition), .src.id = ecs_id(MicePosition), .inout = EcsIn},
 	}});
 
 	ecs_system_init(world,

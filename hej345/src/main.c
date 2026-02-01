@@ -62,9 +62,9 @@ int main(void)
 	ECS_IMPORT(world, FlecsStats);
 	ECS_IMPORT(world, Spatials);
 	ECS_IMPORT(world, Shapes);
+	ECS_IMPORT(world, Mice);
 	ECS_IMPORT(world, Draws);
 	ECS_IMPORT(world, Colors);
-	ECS_IMPORT(world, Mice);
 
 	ecs_set(world, EcsWorld, EcsRest, {.port = 0});
 	printf("Remote: %s\n", "https://www.flecs.dev/explorer/?remote=true");
@@ -90,6 +90,27 @@ int main(void)
 		if (IsKeyDown(KEY_ONE)) {
 			MaximizeWindow();
 		}
+
+		//Vector2 mousePosWorld = GetScreenToWorld2D(GetMousePosition(), c->camera);
+		uint32_t pressed = 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ? 1 << MOUSE_BUTTON_LEFT : 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) ? 1 << MOUSE_BUTTON_RIGHT : 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) ? 1 << MOUSE_BUTTON_MIDDLE : 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_SIDE) ? 1 << MOUSE_BUTTON_SIDE : 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_EXTRA) ? 1 << MOUSE_BUTTON_EXTRA : 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_FORWARD) ? 1 << MOUSE_BUTTON_FORWARD : 0;
+		pressed |= IsMouseButtonPressed(MOUSE_BUTTON_BACK) ? 1 << MOUSE_BUTTON_BACK : 0;
+		uint32_t down = 0;
+		down |= IsMouseButtonDown(MOUSE_BUTTON_LEFT) ? 1 << MOUSE_BUTTON_LEFT : 0;
+		down |= IsMouseButtonDown(MOUSE_BUTTON_RIGHT) ? 1 << MOUSE_BUTTON_RIGHT : 0;
+		down |= IsMouseButtonDown(MOUSE_BUTTON_MIDDLE) ? 1 << MOUSE_BUTTON_MIDDLE : 0;
+		down |= IsMouseButtonDown(MOUSE_BUTTON_SIDE) ? 1 << MOUSE_BUTTON_SIDE : 0;
+		down |= IsMouseButtonDown(MOUSE_BUTTON_EXTRA) ? 1 << MOUSE_BUTTON_EXTRA : 0;
+		down |= IsMouseButtonDown(MOUSE_BUTTON_FORWARD) ? 1 << MOUSE_BUTTON_FORWARD : 0;
+		down |= IsMouseButtonDown(MOUSE_BUTTON_BACK) ? 1 << MOUSE_BUTTON_BACK : 0;
+		float wheel = GetMouseWheelMove();
+		ecs_singleton_set(world, MicePosition, {GetMousePosition().x, GetMousePosition().y, pressed, down, wheel, GetMouseDelta().x, GetMouseDelta().y});
+
 		ecs_progress(world, 0);
 	}
 	CloseWindow();
