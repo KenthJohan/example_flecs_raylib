@@ -8,7 +8,7 @@
 
 #include "Spatials.h"
 #include "Shapes.h"
-#include "Draws.h"
+#include "Renders.h"
 #include "Colors.h"
 #include "Mice.h"
 #include "PlatformRaylib.h"
@@ -61,7 +61,7 @@ int main(void)
 	ECS_IMPORT(world, Spatials);
 	ECS_IMPORT(world, Shapes);
 	ECS_IMPORT(world, Mice);
-	ECS_IMPORT(world, Draws);
+	ECS_IMPORT(world, Renders);
 	ECS_IMPORT(world, Colors);
 	ECS_IMPORT(world, PlatformRaylib);
 
