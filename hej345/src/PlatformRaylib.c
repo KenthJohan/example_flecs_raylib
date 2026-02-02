@@ -287,7 +287,7 @@ static void PlatformRaylibWindow_Create(ecs_iter_t *it)
 
 	ecs_system_init(world,
 	&(ecs_system_desc_t){
-	.entity = ecs_entity(world, {.name = "Update", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
+	.entity = ecs_entity(world, {.name = "Update", .parent = e, .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.callback = Update,
 	.query.terms = {
 	{.id = ecs_id(MiceState), .src.id = ecs_id(MiceState), .inout = EcsIn},
@@ -295,7 +295,7 @@ static void PlatformRaylibWindow_Create(ecs_iter_t *it)
 
 	ecs_system_init(world,
 	&(ecs_system_desc_t){
-	.entity = ecs_entity(world, {.name = "RendersCanvas2_Create", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
+	.entity = ecs_entity(world, {.name = "RendersCanvas2_Create", .parent = e, .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.callback = RendersCanvas2_Create,
 	.query.terms = {
 	{.id = ecs_id(RendersCanvas2), .inout = EcsIn},
@@ -305,7 +305,7 @@ static void PlatformRaylibWindow_Create(ecs_iter_t *it)
 
 	ecs_system_init(world,
 	&(ecs_system_desc_t){
-	.entity = ecs_entity(world, {.name = "DrawsRaylibCanvas_Update", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
+	.entity = ecs_entity(world, {.name = "DrawsRaylibCanvas_Update", .parent = e, .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.callback = DrawsRaylibCanvas_Update,
 	.query.terms = {
 	{.id = ecs_id(PlatformRaylibCanvas2), .inout = EcsIn},
@@ -315,7 +315,7 @@ static void PlatformRaylibWindow_Create(ecs_iter_t *it)
 
 	ecs_system_init(world,
 	&(ecs_system_desc_t){
-	.entity = ecs_entity(world, {.name = "DrawsRaylibCanvas_Draw", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
+	.entity = ecs_entity(world, {.name = "DrawsRaylibCanvas_Draw", .parent = e, .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.run = DrawsRaylibCanvas_Draw,
 	.query.terms = {
 	{.id = ecs_id(PlatformRaylibCanvas2), .inout = EcsIn},
