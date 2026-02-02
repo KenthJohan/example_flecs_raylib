@@ -5,6 +5,8 @@
 #include "Mice.h"
 #include "Renders.h"
 
+#include <raylib.h>
+#define RAYGUI_IMPLEMENTATION
 #include "raygui.h" // Required for GUI controls
 #include "raymath.h"
 #include "rlgl.h"
@@ -17,7 +19,12 @@ typedef struct {
 	ecs_query_t *query_transforms;
 } PlatformRaylibCanvas2;
 
+typedef struct {
+	int32_t dummy;
+} PlatformRaylibWindow;
+
 ECS_COMPONENT_DECLARE(PlatformRaylibCanvas2);
+ECS_COMPONENT_DECLARE(PlatformRaylibWindow);
 ECS_COMPONENT_DECLARE(PlatformRaylibState);
 
 static void Update(ecs_iter_t *it)
@@ -98,7 +105,6 @@ static void Draw_Circle(ecs_iter_t *it)
 		} else {
 			DrawCircleV((Vector2){p->x, p->y}, c->r, (Color){color->r, color->g, color->b, 255});
 		}
-
 	}
 }
 
@@ -192,7 +198,7 @@ static void DrawsRaylibCanvas_Update(ecs_iter_t *it)
 	ecs_world_t *world = it->world;
 	PlatformRaylibCanvas2 *c = ecs_field(it, PlatformRaylibCanvas2, 0); // self, in
 	MicePositionLocal *ml = ecs_field(it, MicePositionLocal, 1);        // self, in
-	MiceState *m = ecs_field(it, MiceState, 2);                   // singleton, in
+	MiceState *m = ecs_field(it, MiceState, 2);                         // singleton, in
 	for (int i = 0; i < it->count; ++i, ++c, ++ml) {
 		// Update mouse world position
 		Vector2 wmouse = GetScreenToWorld2D((Vector2){m->x, m->y}, c->camera);
@@ -265,21 +271,19 @@ static void DrawsRaylibCanvas_Draw(ecs_iter_t *it)
 	EndDrawing();
 }
 
-void PlatformRaylibImport(ecs_world_t *world)
+static void PlatformRaylibWindow_Create(ecs_iter_t *it)
 {
-	ECS_MODULE(world, PlatformRaylib);
-	ECS_IMPORT(world, Spatials);
-	ECS_IMPORT(world, Shapes);
-	ECS_IMPORT(world, Colors);
-	ECS_IMPORT(world, Mice);
-	ECS_IMPORT(world, Renders);
-	ecs_set_name_prefix(world, "PlatformRaylib");
+	ecs_world_t *world = it->world;
+	RendersWindow *w = ecs_field(it, RendersWindow, 0);     // self, in
+	ShapesRectangle *r = ecs_field(it, ShapesRectangle, 1); // self, in
+	ecs_entity_t e = it->entities[0];
 
-	ECS_COMPONENT_DEFINE(world, PlatformRaylibState);
-	ECS_COMPONENT_DEFINE(world, PlatformRaylibCanvas2);
-
-	ecs_singleton_add(world, PlatformRaylibState);
-	ecs_add(world, ecs_id(MiceState), MiceState);
+	w->close_requested = 0;
+	PlatformRaylibWindow *wr = ecs_ensure(world, e, PlatformRaylibWindow);
+	wr->dummy = 0;
+	InitWindow((int)r->w, (int)r->h, "raylib + flecs");
+	SetWindowState(FLAG_WINDOW_RESIZABLE);
+	SetTargetFPS(60);
 
 	ecs_system_init(world,
 	&(ecs_system_desc_t){
@@ -315,5 +319,56 @@ void PlatformRaylibImport(ecs_world_t *world)
 	.run = DrawsRaylibCanvas_Draw,
 	.query.terms = {
 	{.id = ecs_id(PlatformRaylibCanvas2), .inout = EcsIn},
+	}});
+}
+
+static void PlatformRaylibWindow_Update(ecs_iter_t *it)
+{
+	RendersWindow *w = ecs_field(it, RendersWindow, 0);     // self, in
+	w->close_requested = WindowShouldClose(); // Does update and check for close
+	if (IsKeyDown(KEY_ONE)) {
+		MaximizeWindow();
+	}
+	if (w->close_requested) {
+		ecs_delete(it->world, it->entities[0]);
+		CloseWindow();
+	}
+}
+
+void PlatformRaylibImport(ecs_world_t *world)
+{
+	ECS_MODULE(world, PlatformRaylib);
+	ECS_IMPORT(world, Spatials);
+	ECS_IMPORT(world, Shapes);
+	ECS_IMPORT(world, Colors);
+	ECS_IMPORT(world, Mice);
+	ECS_IMPORT(world, Renders);
+	ecs_set_name_prefix(world, "PlatformRaylib");
+
+	ECS_COMPONENT_DEFINE(world, PlatformRaylibState);
+	ECS_COMPONENT_DEFINE(world, PlatformRaylibCanvas2);
+	ECS_COMPONENT_DEFINE(world, PlatformRaylibWindow);
+
+	ecs_singleton_add(world, PlatformRaylibState);
+	ecs_add(world, ecs_id(MiceState), MiceState);
+
+	ecs_system_init(world,
+	&(ecs_system_desc_t){
+	.entity = ecs_entity(world, {.name = "PlatformRaylibWindow_Update", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
+	.callback = PlatformRaylibWindow_Update,
+	.query.terms = {
+	{.id = ecs_id(RendersWindow), .inout = EcsIn},
+	{.id = ecs_id(PlatformRaylibWindow), .inout = EcsIn},
+	}});
+
+	ecs_system_init(world,
+	&(ecs_system_desc_t){
+	.entity = ecs_entity(world, {.name = "PlatformRaylibWindow_Create", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
+	.callback = PlatformRaylibWindow_Create,
+	.immediate = true,
+	.query.terms = {
+	{.id = ecs_id(RendersWindow), .inout = EcsIn},
+	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
+	{.id = ecs_id(PlatformRaylibWindow), .oper = EcsNot},
 	}});
 }

@@ -5,9 +5,12 @@ using spatials
 
 const DEG2RAD: 0.017453292519943295769236907684886
 
+window1 {
+    renders.Window : {0}
+    Rectangle : {699, 399}
+}
 
-
-canvas1 {
+window1.canvas1 {
     renders.Canvas2
     Rectangle : {600, 300}
     mice.PositionLocal
@@ -56,7 +59,7 @@ template Car {
 
 
 
-canvas1.origin : tf {
+window1.canvas1.origin : tf {
     Car car()
     Rotation : {0}
     Circle : {10}

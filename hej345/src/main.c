@@ -1,10 +1,5 @@
-#include <raylib.h>
-#include <flecs.h>
 
-#include "rlgl.h"
-#include "raymath.h"
-#define RAYGUI_IMPLEMENTATION
-#include "raygui.h" // Required for GUI controls
+#include <flecs.h>
 
 #include "Spatials.h"
 #include "Shapes.h"
@@ -16,6 +11,7 @@
 // include header for getcwd
 #include <unistd.h>
 #include <limits.h> // For PATH_MAX
+#include <stdio.h>
 
 static ecs_os_api_t os_api_default = {0};
 
@@ -68,27 +64,26 @@ int main(void)
 	ecs_set(world, EcsWorld, EcsRest, {.port = 0});
 	printf("Remote: %s\n", "https://www.flecs.dev/explorer/?remote=true");
 
-	const int screenWidth = 800;
-	const int screenHeight = 450;
-	InitWindow(screenWidth, screenHeight, "raylib [core] example - 2d camera mouse zoom");
-	SetWindowState(FLAG_WINDOW_RESIZABLE);
-	SetTargetFPS(60);
-
 	ecs_log_set_level(0);
 	ecs_script_run_file(world, "./config/world.flecs");
 	ecs_log_set_level(-1);
 
-	ecs_entity_t canvas1 = ecs_lookup(world, "canvas1");
+	ecs_entity_t window1 = ecs_lookup(world, "window1");
+	if (window1 == 0) {
+		ecs_os_abort();
+	}
+
+	ecs_entity_t canvas1 = ecs_lookup(world, "window1.canvas1");
 	if (canvas1 == 0) {
 		ecs_os_abort();
 	}
 
-	while (!WindowShouldClose()) {
-		if (IsKeyDown(KEY_ONE)) {
-			MaximizeWindow();
+	while (1) {
+		RendersWindow const *w = ecs_get(world, window1, RendersWindow);
+		if (w->close_requested) {
+			break;
 		}
 		ecs_progress(world, 0);
 	}
-	CloseWindow();
 	return 0;
 }
