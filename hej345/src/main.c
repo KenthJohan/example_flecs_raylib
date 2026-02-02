@@ -72,6 +72,7 @@ int main(void)
 	const int screenHeight = 450;
 	InitWindow(screenWidth, screenHeight, "raylib [core] example - 2d camera mouse zoom");
 	SetWindowState(FLAG_WINDOW_RESIZABLE);
+	SetTargetFPS(60);
 
 	ecs_log_set_level(0);
 	ecs_script_run_file(world, "./config/world.flecs");
@@ -82,7 +83,6 @@ int main(void)
 		ecs_os_abort();
 	}
 
-	SetTargetFPS(60);
 	while (!WindowShouldClose()) {
 		if (IsKeyDown(KEY_ONE)) {
 			MaximizeWindow();

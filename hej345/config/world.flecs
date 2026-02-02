@@ -9,7 +9,7 @@ const DEG2RAD: 0.017453292519943295769236907684886
 
 canvas1 {
     renders.Canvas2
-    Rectangle : {400, 300}
+    Rectangle : {600, 300}
     mice.PositionLocal
 }
 
@@ -36,12 +36,14 @@ template Car {
             Rotation : {0}
             Rgb: {44, 55, 33}
             Circle : {d*2}
+            Omega : {1 * DEG2RAD}
         }
         wheel2 : tf {
             Position2: {w/2, h}
             Rotation : {0}
             Rgb: {44, 55, 33}
             Circle : {d*2}
+            Omega : {1 * DEG2RAD}
         }
         r1 : tf {
             Position2: {22, 22}

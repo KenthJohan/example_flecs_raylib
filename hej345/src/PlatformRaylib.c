@@ -22,7 +22,7 @@ ECS_COMPONENT_DECLARE(PlatformRaylibState);
 
 static void Update(ecs_iter_t *it)
 {
-	MicePosition *m = ecs_field(it, MicePosition, 0); // singleton, in
+	MiceState *m = ecs_field(it, MiceState, 0); // singleton, in
 	// Vector2 mousePosWorld = GetScreenToWorld2D(GetMousePosition(), c->camera);
 	uint32_t pressed = 0;
 	pressed |= IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ? 1 << MOUSE_BUTTON_LEFT : 0;
@@ -90,7 +90,15 @@ static void Draw_Circle(ecs_iter_t *it)
 	ShapesCircle *c = ecs_field(it, ShapesCircle, 1);                     // self, in
 	ColorsWorldRgb *color = ecs_field(it, ColorsWorldRgb, 2);             // self, in
 	for (int i = 0; i < it->count; ++i, ++p, ++c, ++color) {
-		DrawCircleV((Vector2){p->x, p->y}, c->r, (Color){color->r, color->g, color->b, 255});
+
+		if (ecs_has(it->world, it->entities[i], MiceToggle)) {
+			float padding = 2.0f;
+			DrawCircleV((Vector2){p->x, p->y}, c->r, (Color){~color->r, ~color->g, ~color->b, 255});
+			DrawCircleV((Vector2){p->x, p->y}, c->r - padding, (Color){color->r, color->g, color->b, 255});
+		} else {
+			DrawCircleV((Vector2){p->x, p->y}, c->r, (Color){color->r, color->g, color->b, 255});
+		}
+
 	}
 }
 
@@ -184,7 +192,7 @@ static void DrawsRaylibCanvas_Update(ecs_iter_t *it)
 	ecs_world_t *world = it->world;
 	PlatformRaylibCanvas2 *c = ecs_field(it, PlatformRaylibCanvas2, 0); // self, in
 	MicePositionLocal *ml = ecs_field(it, MicePositionLocal, 1);        // self, in
-	MicePosition *m = ecs_field(it, MicePosition, 2);                   // singleton, in
+	MiceState *m = ecs_field(it, MiceState, 2);                   // singleton, in
 	for (int i = 0; i < it->count; ++i, ++c, ++ml) {
 		// Update mouse world position
 		Vector2 wmouse = GetScreenToWorld2D((Vector2){m->x, m->y}, c->camera);
@@ -246,7 +254,6 @@ static void DrawsRaylibCanvas_Draw(ecs_iter_t *it)
 {
 	BeginDrawing();
 	ClearBackground(BLACK);
-	ecs_world_t *world = it->world;
 	while (ecs_query_next(it)) {
 		PlatformRaylibCanvas2 *c = ecs_field(it, PlatformRaylibCanvas2, 0); // self, in
 		for (int i = 0; i < it->count; ++i, ++c) {
@@ -272,14 +279,14 @@ void PlatformRaylibImport(ecs_world_t *world)
 	ECS_COMPONENT_DEFINE(world, PlatformRaylibCanvas2);
 
 	ecs_singleton_add(world, PlatformRaylibState);
-	ecs_add(world, ecs_id(PlatformRaylibState), MicePosition);
+	ecs_add(world, ecs_id(MiceState), MiceState);
 
 	ecs_system_init(world,
 	&(ecs_system_desc_t){
 	.entity = ecs_entity(world, {.name = "Update", .add = ecs_ids(ecs_dependson(EcsPostUpdate))}),
 	.callback = Update,
 	.query.terms = {
-	{.id = ecs_id(MicePosition), .src.id = ecs_id(PlatformRaylibState), .inout = EcsIn},
+	{.id = ecs_id(MiceState), .src.id = ecs_id(MiceState), .inout = EcsIn},
 	}});
 
 	ecs_system_init(world,
@@ -299,7 +306,7 @@ void PlatformRaylibImport(ecs_world_t *world)
 	.query.terms = {
 	{.id = ecs_id(PlatformRaylibCanvas2), .inout = EcsIn},
 	{.id = ecs_id(MicePositionLocal), .inout = EcsIn},
-	{.id = ecs_id(MicePosition), .src.id = ecs_id(PlatformRaylibState), .inout = EcsIn},
+	{.id = ecs_id(MiceState), .src.id = ecs_id(MiceState), .inout = EcsIn},
 	}});
 
 	ecs_system_init(world,

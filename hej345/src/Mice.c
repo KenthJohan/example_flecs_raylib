@@ -5,7 +5,7 @@
 
 ECS_TAG_DECLARE(MiceCollide);
 ECS_TAG_DECLARE(MiceToggle);
-ECS_COMPONENT_DECLARE(MicePosition);
+ECS_COMPONENT_DECLARE(MiceState);
 ECS_COMPONENT_DECLARE(MicePositionLocal);
 
 static void Test_Collision_Rectangle(ecs_iter_t *it)
@@ -14,7 +14,6 @@ static void Test_Collision_Rectangle(ecs_iter_t *it)
 	SpatialsTransform2 const *t = ecs_field(it, SpatialsTransform2, 1);         // self, in
 	SpatialsWorldPosition2 const *p = ecs_field(it, SpatialsWorldPosition2, 2); // self, in
 	ShapesRectangle const *r = ecs_field(it, ShapesRectangle, 3);               // self, in
-
 	for (int i = 0; i < it->count; ++i, ++t, ++p, ++r) {
 		// Inverse transform mouse position to local space
 		float dx = m->x - p->x;
@@ -35,7 +34,6 @@ static void Test_Collision_Circle(ecs_iter_t *it)
 	MicePositionLocal const *m = ecs_field(it, MicePositionLocal, 0);           // shared, in
 	SpatialsWorldPosition2 const *p = ecs_field(it, SpatialsWorldPosition2, 1); // self, in
 	ShapesCircle const *c = ecs_field(it, ShapesCircle, 2);                     // self, in
-
 	for (int i = 0; i < it->count; ++i, ++p, ++c) {
 		// Calculate distance between mouse and circle center
 		float dx = m->x - p->x;
@@ -79,7 +77,7 @@ static void Change_Color_MiceToggle(ecs_iter_t *it)
 
 static void Toggle(ecs_iter_t *it)
 {
-	MicePosition const *m = ecs_field(it, MicePosition, 0); // singleton, in
+	MiceState const *m = ecs_field(it, MiceState, 0); // singleton, in
 	for (int i = 0; i < it->count; ++i) {
 		if (m->pressed & (1 << MOUSE_BUTTON_LEFT)) {
 			if (ecs_has_id(it->world, it->entities[i], MiceToggle)) {
@@ -99,13 +97,13 @@ void MiceImport(ecs_world_t *world)
 	ECS_IMPORT(world, Shapes);
 	ECS_IMPORT(world, Colors);
 
-	ECS_COMPONENT_DEFINE(world, MicePosition);
+	ECS_COMPONENT_DEFINE(world, MiceState);
 	ECS_COMPONENT_DEFINE(world, MicePositionLocal);
 	ECS_TAG_DEFINE(world, MiceCollide);
 	ECS_TAG_DEFINE(world, MiceToggle);
 
 	ecs_struct(world,
-	{.entity = ecs_id(MicePosition),
+	{.entity = ecs_id(MiceState),
 	.members = {
 	{.name = "x", .type = ecs_id(ecs_f32_t)},
 	{.name = "y", .type = ecs_id(ecs_f32_t)},
@@ -165,7 +163,7 @@ void MiceImport(ecs_world_t *world)
 	{.entity = ecs_entity(world, {.name = "Toggle", .add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
 	.callback = Toggle,
 	.query.terms = {
-	{.id = ecs_id(MicePosition), .src.id = ecs_id(MicePosition), .inout = EcsIn},
+	{.id = ecs_id(MiceState), .src.id = ecs_id(MiceState), .inout = EcsIn},
 	{.id = MiceCollide},
 	}});
 }

@@ -10,7 +10,7 @@ typedef struct {
 	float wheel;
 	float dx;
 	float dy;
-} MicePosition;
+} MiceState;
 
 typedef struct {
 	float x;
@@ -19,7 +19,7 @@ typedef struct {
 
 extern ECS_TAG_DECLARE(MiceCollide);
 extern ECS_TAG_DECLARE(MiceToggle);
-extern ECS_COMPONENT_DECLARE(MicePosition);
+extern ECS_COMPONENT_DECLARE(MiceState);
 extern ECS_COMPONENT_DECLARE(MicePositionLocal);
 
 
