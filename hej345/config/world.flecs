@@ -95,8 +95,10 @@ window1.canvas1.origin.a2 : tf {
     Crank : {100, 4}
     Rgb : {0, 50, 255}
     Omega : {1 * DEG2RAD}
-    linkage {
-        FourBarLinkage : { [50, 100, 75, 125], 0 }
+    end1 : tf {
+        Position2 : {50, 0}
+        Circle : {10}
+        Rotation : {0}
     }
 }
 
@@ -106,7 +108,9 @@ window1.canvas1.origin.a3 : tf {
     Crank : {100, 4}
     Rgb : {0, 50, 255}
     Omega : {1 * DEG2RAD}
-    linkage {
-        FourBarLinkage : { [50, 100, 75, 125], 0 }
+    end1 : tf {
+        Position2 : {50, 0}
+        Circle : {10}
+        Rotation : {0}
     }
 }
