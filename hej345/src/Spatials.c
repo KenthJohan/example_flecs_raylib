@@ -8,6 +8,7 @@ ECS_COMPONENT_DECLARE(SpatialsRotation);
 ECS_COMPONENT_DECLARE(SpatialsTransform2);
 ECS_COMPONENT_DECLARE(SpatialsVector2);
 ECS_COMPONENT_DECLARE(SpatialsOmega);
+ECS_COMPONENT_DECLARE(SpatialsFourBarLinkage);
 
 ECS_COMPONENT_DECLARE(SpatialsWorldRotation);
 ECS_COMPONENT_DECLARE(SpatialsWorldPosition2);
@@ -74,6 +75,28 @@ static void Rotator(ecs_iter_t *it)
 	}
 }
 
+static void SpatialsFourBarLinkage_Calculate(ecs_iter_t *it)
+{
+	SpatialsRotation const *r = ecs_field(it, SpatialsRotation, 0);       // shared, in
+	SpatialsFourBarLinkage *b = ecs_field(it, SpatialsFourBarLinkage, 1); // self, out
+	for (int i = 0; i < it->count; ++i, ++b) {
+		// Calculate positions of the four bar linkage based on input rotation
+		float a = r->radians;
+		float l1 = b->l[0];
+		float l2 = b->l[1];
+		float l3 = b->l[2];
+		float l4 = b->l[3];
+
+		// Using the law of cosines to find the angle at the coupler link
+		float A = l1;
+		float B = l2;
+		float C = sqrtf(l3 * l3 + l4 * l4 - 2 * l3 * l4 * cosf(a));
+
+		float angle_C = acosf((A * A + B * B - C * C) / (2 * A * B));
+		b->angle = angle_C;
+	}
+}
+
 ECS_CTOR(SpatialsTransform2, t, {
 	t->c0[0] = 1;
 	t->c0[1] = 0;
@@ -90,6 +113,7 @@ void SpatialsImport(ecs_world_t *world)
 	ECS_COMPONENT_DEFINE(world, SpatialsRotation);
 	ECS_COMPONENT_DEFINE(world, SpatialsTransform2);
 	ECS_COMPONENT_DEFINE(world, SpatialsOmega);
+	ECS_COMPONENT_DEFINE(world, SpatialsFourBarLinkage);
 
 	ECS_COMPONENT_DEFINE(world, SpatialsWorldPosition2);
 	ECS_COMPONENT_DEFINE(world, SpatialsWorldRotation);
@@ -142,6 +166,13 @@ void SpatialsImport(ecs_world_t *world)
 	{.name = "radians_per_second", .type = ecs_id(ecs_f32_t)},
 	}});
 
+	ecs_struct(world,
+	{.entity = ecs_id(SpatialsFourBarLinkage),
+	.members = {
+	{.name = "l", .type = ecs_id(ecs_f32_t), .count = 4},
+	{.name = "angle", .type = ecs_id(ecs_f32_t)},
+	}});
+
 	ecs_system(world,
 	{.entity = ecs_entity(world, {.name = "Rotator", .add = ecs_ids(ecs_dependson(EcsPreUpdate))}),
 	.callback = Rotator,
@@ -175,5 +206,13 @@ void SpatialsImport(ecs_world_t *world)
 	{.id = ecs_id(SpatialsWorldRotation), .inout = EcsOut},
 	{.id = ecs_id(SpatialsRotation), .inout = EcsIn},
 	{.id = ecs_id(SpatialsWorldRotation), .src.id = EcsCascade, .inout = EcsIn, .oper = EcsOptional},
+	}});
+
+	ecs_system(world,
+	{.entity = ecs_entity(world, {.name = "SpatialsFourBarLinkage_Calculate", .add = ecs_ids(ecs_dependson(EcsPreUpdate))}),
+	.callback = SpatialsFourBarLinkage_Calculate,
+	.query.terms = {
+	{.id = ecs_id(SpatialsRotation), .src.id = EcsUp, .trav = EcsChildOf, .inout = EcsIn},
+	{.id = ecs_id(SpatialsFourBarLinkage), .inout = EcsIn},
 	}});
 }

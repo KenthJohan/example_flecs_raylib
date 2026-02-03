@@ -16,6 +16,7 @@ typedef struct {
 	Camera2D camera;
 	ecs_query_t *query_circles;
 	ecs_query_t *query_rectangles;
+	ecs_query_t *query_cranks;
 	ecs_query_t *query_transforms;
 } PlatformRaylibCanvas2;
 
@@ -26,6 +27,66 @@ typedef struct {
 ECS_COMPONENT_DECLARE(PlatformRaylibCanvas2);
 ECS_COMPONENT_DECLARE(PlatformRaylibWindow);
 ECS_COMPONENT_DECLARE(PlatformRaylibState);
+
+static void generate_6vertices_rectangle(SpatialsVector2 *v, float w, float h)
+{
+	// First triangle
+	v[2].x = -w / 2;
+	v[2].y = -h / 2;
+	v[1].x = w / 2;
+	v[1].y = -h / 2;
+	v[0].x = w / 2;
+	v[0].y = h / 2;
+	// Second triangle
+	v[5].x = -w / 2;
+	v[5].y = -h / 2;
+	v[4].x = w / 2;
+	v[4].y = h / 2;
+	v[3].x = -w / 2;
+	v[3].y = h / 2;
+}
+
+static void SpatialsTransform2_transform_points(SpatialsTransform2 *t, SpatialsVector2 *points, int count)
+{
+	for (int i = 0; i < count; i++) {
+		float x = points[i].x;
+		float y = points[i].y;
+		points[i].x = t->c0[0] * x + t->c1[0] * y;
+		points[i].y = t->c0[1] * x + t->c1[1] * y;
+	}
+}
+
+static void SpatialsVector2_translate(SpatialsVector2 *v, int count, SpatialsVector2 t)
+{
+	for (int i = 0; i < count; i++) {
+		v[i].x += t.x;
+		v[i].y += t.y;
+	}
+}
+
+static void SpatialsVector2_draw(SpatialsVector2 *v, int count, Color color)
+{
+	rlBegin(RL_TRIANGLES);
+	for (int i = 0; i < count; i++, ++v) {
+		rlColor4ub(color.r, color.g, color.b, color.a);
+		rlVertex2f(v->x, v->y);
+	}
+	rlEnd();
+}
+
+static void Draw_Crank(ecs_iter_t *it)
+{
+	SpatialsWorldPosition2 *p = ecs_field(it, SpatialsWorldPosition2, 0); // self, in
+	SpatialsTransform2 *t = ecs_field(it, SpatialsTransform2, 1);         // self, in
+	ShapesCrank *c = ecs_field(it, ShapesCrank, 2);                       // self, in
+	ColorsWorldRgb *color = ecs_field(it, ColorsWorldRgb, 3);             // self, in
+	for (int i = 0; i < it->count; ++i, ++p, ++c, ++color) {
+		SpatialsVector2 b = {c->l, 0};
+		SpatialsTransform2_transform_points(t, &b, 1);
+		SpatialsVector2_translate(&b, 1, (SpatialsVector2){p->x, p->y});
+		DrawLineEx((Vector2){p->x, p->y}, (Vector2){b.x, b.y}, c->t, (Color){color->r, color->g, color->b, 255});
+	}
+}
 
 static void Update(ecs_iter_t *it)
 {
@@ -87,6 +148,14 @@ static void RendersCanvas2_Create(ecs_iter_t *it)
 		{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
 		{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
 		}});
+		canvas->query_cranks = ecs_query_init(world,
+		&(ecs_query_desc_t){
+		.terms = {
+		{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
+		{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
+		{.id = ecs_id(ShapesCrank), .inout = EcsIn},
+		{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
+		}});
 		canvas->camera.zoom = 1.0f;
 	}
 }
@@ -97,7 +166,6 @@ static void Draw_Circle(ecs_iter_t *it)
 	ShapesCircle *c = ecs_field(it, ShapesCircle, 1);                     // self, in
 	ColorsWorldRgb *color = ecs_field(it, ColorsWorldRgb, 2);             // self, in
 	for (int i = 0; i < it->count; ++i, ++p, ++c, ++color) {
-
 		if (ecs_has(it->world, it->entities[i], MiceToggle)) {
 			float padding = 2.0f;
 			DrawCircleV((Vector2){p->x, p->y}, c->r, (Color){~color->r, ~color->g, ~color->b, 255});
@@ -106,52 +174,6 @@ static void Draw_Circle(ecs_iter_t *it)
 			DrawCircleV((Vector2){p->x, p->y}, c->r, (Color){color->r, color->g, color->b, 255});
 		}
 	}
-}
-
-void generate_6vertices_rectangle(SpatialsVector2 *v, float w, float h)
-{
-	// First triangle
-	v[2].x = -w / 2;
-	v[2].y = -h / 2;
-	v[1].x = w / 2;
-	v[1].y = -h / 2;
-	v[0].x = w / 2;
-	v[0].y = h / 2;
-	// Second triangle
-	v[5].x = -w / 2;
-	v[5].y = -h / 2;
-	v[4].x = w / 2;
-	v[4].y = h / 2;
-	v[3].x = -w / 2;
-	v[3].y = h / 2;
-}
-
-void SpatialsTransform2_transform_points(SpatialsTransform2 *t, SpatialsVector2 *points, int count)
-{
-	for (int i = 0; i < count; i++) {
-		float x = points[i].x;
-		float y = points[i].y;
-		points[i].x = t->c0[0] * x + t->c1[0] * y;
-		points[i].y = t->c0[1] * x + t->c1[1] * y;
-	}
-}
-
-void SpatialsVector2_translate(SpatialsVector2 *v, int count, SpatialsVector2 t)
-{
-	for (int i = 0; i < count; i++) {
-		v[i].x += t.x;
-		v[i].y += t.y;
-	}
-}
-
-void SpatialsVector2_draw(SpatialsVector2 *v, int count, Color color)
-{
-	rlBegin(RL_TRIANGLES);
-	for (int i = 0; i < count; i++, ++v) {
-		rlColor4ub(color.r, color.g, color.b, color.a);
-		rlVertex2f(v->x, v->y);
-	}
-	rlEnd();
 }
 
 static void Draw_Rectangle(ecs_iter_t *it)
@@ -251,6 +273,10 @@ static void DrawsRaylibCanvas_Update(ecs_iter_t *it)
 		while (ecs_query_next(&it2)) {
 			Draw_Transform(&it2);
 		}
+		it2 = ecs_query_iter(world, c->query_cranks);
+		while (ecs_query_next(&it2)) {
+			Draw_Crank(&it2);
+		}
 		EndMode2D();
 		EndTextureMode();
 	}
@@ -324,8 +350,8 @@ static void PlatformRaylibWindow_Create(ecs_iter_t *it)
 
 static void PlatformRaylibWindow_Update(ecs_iter_t *it)
 {
-	RendersWindow *w = ecs_field(it, RendersWindow, 0);     // self, in
-	w->close_requested = WindowShouldClose(); // Does update and check for close
+	RendersWindow *w = ecs_field(it, RendersWindow, 0); // self, in
+	w->close_requested = WindowShouldClose();           // Does update and check for close
 	if (IsKeyDown(KEY_ONE)) {
 		MaximizeWindow();
 	}

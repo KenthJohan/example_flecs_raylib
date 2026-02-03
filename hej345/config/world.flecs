@@ -57,34 +57,56 @@ template Car {
     }
 }
 
-
-
 window1.canvas1.origin : tf {
-    Car car()
-    Rotation : {0}
+    //Car car()
     Circle : {10}
     Rgb : {111, 0, 55}
-    a1 : tf {
-        Position2 : {100, -20}
-        Rotation : {45 * DEG2RAD}
-        Omega : {1 * DEG2RAD}
-        Rectangle : {20, 20}
-        Rgb : {255, 50, 0}
-        a1 : tf {
-            Position2 : {100, 0}
-            Rotation : {0}
-            //Omega : {5 * DEG2RAD}
-            Circle : {30}
-            Rgb : {33, 50, 99}
-            a1 : tf {
-                Position2 : {50, 0}
-                Rotation : {0}
-                //Omega : {2 * DEG2RAD}
-                Circle : {10}
-                Rgb : {0, 200, 150}
-            }
-        }
-    }
 }
 
 
+/*
+window1.canvas1.origin.a1 : tf {
+    Position2 : {100, -20}
+    Rotation : {45 * DEG2RAD}
+    Omega : {1 * DEG2RAD}
+    Rectangle : {20, 20}
+    Rgb : {255, 50, 0}
+    a1 : tf {
+        Position2 : {100, 0}
+        Rotation : {0}
+        //Omega : {5 * DEG2RAD}
+        Circle : {30}
+        Rgb : {33, 50, 99}
+        a1 : tf {
+            Position2 : {50, 0}
+            Rotation : {0}
+            //Omega : {2 * DEG2RAD}
+            Circle : {10}
+            Rgb : {0, 200, 150}
+        }
+    }
+}
+*/
+
+
+window1.canvas1.origin.a2 : tf {
+    Position2 : {-100, -20}
+    Rotation : {0 * DEG2RAD}
+    Crank : {100, 4}
+    Rgb : {0, 50, 255}
+    Omega : {1 * DEG2RAD}
+    linkage {
+        FourBarLinkage : { [50, 100, 75, 125], 0 }
+    }
+}
+
+window1.canvas1.origin.a3 : tf {
+    Position2 : {30, -20}
+    Rotation : {0 * DEG2RAD}
+    Crank : {100, 4}
+    Rgb : {0, 50, 255}
+    Omega : {1 * DEG2RAD}
+    linkage {
+        FourBarLinkage : { [50, 100, 75, 125], 0 }
+    }
+}
