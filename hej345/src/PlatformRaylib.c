@@ -76,15 +76,12 @@ static void SpatialsVector2_draw(SpatialsVector2 *v, int count, Color color)
 
 static void Draw_Crank(ecs_iter_t *it)
 {
-	SpatialsWorldPosition2 *p = ecs_field(it, SpatialsWorldPosition2, 0); // self, in
-	SpatialsTransform2 *t = ecs_field(it, SpatialsTransform2, 1);         // self, in
+	SpatialsWorldPosition2 *a = ecs_field(it, SpatialsWorldPosition2, 0); // shared, in
+	SpatialsWorldPosition2 *b = ecs_field(it, SpatialsWorldPosition2, 1); // self, in
 	ShapesCrank *c = ecs_field(it, ShapesCrank, 2);                       // self, in
 	ColorsWorldRgb *color = ecs_field(it, ColorsWorldRgb, 3);             // self, in
-	for (int i = 0; i < it->count; ++i, ++p, ++c, ++color) {
-		SpatialsVector2 b = {c->l, 0};
-		SpatialsTransform2_transform_points(t, &b, 1);
-		SpatialsVector2_translate(&b, 1, (SpatialsVector2){p->x, p->y});
-		DrawLineEx((Vector2){p->x, p->y}, (Vector2){b.x, b.y}, c->t, (Color){color->r, color->g, color->b, 255});
+	for (int i = 0; i < it->count; ++i, ++b, ++c, ++color) {
+		DrawLineEx((Vector2){a->x, a->y}, (Vector2){b->x, b->y}, c->t, (Color){color->r, color->g, color->b, 255});
 	}
 }
 
@@ -151,8 +148,8 @@ static void RendersCanvas2_Create(ecs_iter_t *it)
 		canvas->query_cranks = ecs_query_init(world,
 		&(ecs_query_desc_t){
 		.terms = {
+		{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn, .trav = EcsChildOf, .src.id = EcsUp},
 		{.id = ecs_id(SpatialsWorldPosition2), .inout = EcsIn},
-		{.id = ecs_id(SpatialsTransform2), .inout = EcsIn},
 		{.id = ecs_id(ShapesCrank), .inout = EcsIn},
 		{.id = ecs_id(ColorsWorldRgb), .inout = EcsIn},
 		}});

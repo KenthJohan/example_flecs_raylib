@@ -88,29 +88,42 @@ window1.canvas1.origin.a1 : tf {
 }
 */
 
-
+/*
 window1.canvas1.origin.a2 : tf {
     Position2 : {-100, -20}
     Rotation : {0 * DEG2RAD}
-    Crank : {100, 4}
     Rgb : {0, 50, 255}
     Omega : {1 * DEG2RAD}
     end1 : tf {
         Position2 : {50, 0}
         Circle : {10}
         Rotation : {0}
+        Rgb : {0, 50, 255}
     }
 }
+*/
 
 window1.canvas1.origin.a3 : tf {
     Position2 : {30, -20}
     Rotation : {0 * DEG2RAD}
-    Crank : {100, 4}
     Rgb : {0, 50, 255}
     Omega : {1 * DEG2RAD}
     end1 : tf {
+        Crank : {4}
         Position2 : {50, 0}
-        Circle : {10}
         Rotation : {0}
+        Rgb : {0, 50, 255}
+        j1 : tf {
+            Position2 : {0, 0}
+            Circle : {8}
+            Rotation : {0 * DEG2RAD}
+            Rgb : {255, 0, 150}
+        }
+        j2 : tf {
+            Position2 : {00, 50}
+            Crank : {4}
+            Rotation : {0 * DEG2RAD}
+            Rgb : {255, 0, 150}
+        }
     }
 }

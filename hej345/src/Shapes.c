@@ -31,7 +31,6 @@ void ShapesImport(ecs_world_t *world)
 	ecs_struct(world,
 	{.entity = ecs_id(ShapesCrank),
 	.members = {
-	{.name = "l", .type = ecs_id(ecs_f32_t)},
 	{.name = "t", .type = ecs_id(ecs_f32_t)},
 	}});
 }

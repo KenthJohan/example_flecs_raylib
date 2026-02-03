@@ -12,7 +12,6 @@ typedef struct {
 } ShapesCircle;
 
 typedef struct {
-	float l;
 	float t;
 } ShapesCrank;
 
