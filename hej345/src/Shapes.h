@@ -11,9 +11,7 @@ typedef struct {
 	float r;
 } ShapesCircle;
 
-typedef struct {
-	float t;
-} ShapesCrank;
+
 
 extern ECS_COMPONENT_DECLARE(ShapesRectangle);
 extern ECS_COMPONENT_DECLARE(ShapesCircle);

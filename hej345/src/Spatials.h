@@ -35,6 +35,11 @@ typedef struct {
 } SpatialsOmega;
 
 typedef struct {
+	float l;
+	float t;
+} SpatialsCrank;
+
+typedef struct {
 	float l[4];
 	float angle;
 } SpatialsFourBarLinkage;
@@ -44,6 +49,7 @@ extern ECS_COMPONENT_DECLARE(SpatialsPosition2);
 extern ECS_COMPONENT_DECLARE(SpatialsRotation);
 extern ECS_COMPONENT_DECLARE(SpatialsVector2);
 extern ECS_COMPONENT_DECLARE(SpatialsOmega);
+extern ECS_COMPONENT_DECLARE(SpatialsCrank);
 extern ECS_COMPONENT_DECLARE(SpatialsFourBarLinkage);
 
 

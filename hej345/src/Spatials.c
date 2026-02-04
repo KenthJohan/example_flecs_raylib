@@ -8,6 +8,7 @@ ECS_COMPONENT_DECLARE(SpatialsRotation);
 ECS_COMPONENT_DECLARE(SpatialsTransform2);
 ECS_COMPONENT_DECLARE(SpatialsVector2);
 ECS_COMPONENT_DECLARE(SpatialsOmega);
+ECS_COMPONENT_DECLARE(SpatialsCrank);
 ECS_COMPONENT_DECLARE(SpatialsFourBarLinkage);
 
 ECS_COMPONENT_DECLARE(SpatialsWorldRotation);
@@ -97,6 +98,17 @@ static void SpatialsFourBarLinkage_Calculate(ecs_iter_t *it)
 	}
 }
 
+static void Crank_To_Position(ecs_iter_t *it)
+{
+	SpatialsCrank const *c = ecs_field(it, SpatialsCrank, 0);       // self, in
+	SpatialsRotation const *r = ecs_field(it, SpatialsRotation, 1); // self, in
+	SpatialsPosition2 *p = ecs_field(it, SpatialsPosition2, 2);     // self, out
+	for (int i = 0; i < it->count; ++i, ++c, ++r, ++p) {
+		p->x = c->l * cosf(r->radians);
+		p->y = c->l * sinf(r->radians);
+	}
+}
+
 ECS_CTOR(SpatialsTransform2, t, {
 	t->c0[0] = 1;
 	t->c0[1] = 0;
@@ -113,6 +125,7 @@ void SpatialsImport(ecs_world_t *world)
 	ECS_COMPONENT_DEFINE(world, SpatialsRotation);
 	ECS_COMPONENT_DEFINE(world, SpatialsTransform2);
 	ECS_COMPONENT_DEFINE(world, SpatialsOmega);
+	ECS_COMPONENT_DEFINE(world, SpatialsCrank);
 	ECS_COMPONENT_DEFINE(world, SpatialsFourBarLinkage);
 
 	ECS_COMPONENT_DEFINE(world, SpatialsWorldPosition2);
@@ -167,6 +180,13 @@ void SpatialsImport(ecs_world_t *world)
 	}});
 
 	ecs_struct(world,
+	{.entity = ecs_id(SpatialsCrank),
+	.members = {
+	{.name = "l", .type = ecs_id(ecs_f32_t)},
+	{.name = "t", .type = ecs_id(ecs_f32_t)},
+	}});
+
+	ecs_struct(world,
 	{.entity = ecs_id(SpatialsFourBarLinkage),
 	.members = {
 	{.name = "l", .type = ecs_id(ecs_f32_t), .count = 4},
@@ -214,5 +234,14 @@ void SpatialsImport(ecs_world_t *world)
 	.query.terms = {
 	{.id = ecs_id(SpatialsRotation), .src.id = EcsUp, .trav = EcsChildOf, .inout = EcsIn},
 	{.id = ecs_id(SpatialsFourBarLinkage), .inout = EcsIn},
+	}});
+
+	ecs_system(world,
+	{.entity = ecs_entity(world, {.name = "Crank_To_Position", .add = ecs_ids(ecs_dependson(EcsPreUpdate))}),
+	.callback = Crank_To_Position,
+	.query.terms = {
+	{.id = ecs_id(SpatialsCrank), .inout = EcsIn},
+	{.id = ecs_id(SpatialsRotation), .inout = EcsIn},
+	{.id = ecs_id(SpatialsPosition2), .inout = EcsOut},
 	}});
 }
