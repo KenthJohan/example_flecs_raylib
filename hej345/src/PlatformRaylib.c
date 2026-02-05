@@ -78,7 +78,7 @@ static void Draw_Crank(ecs_iter_t *it)
 {
 	SpatialsWorldPosition2 *a = ecs_field(it, SpatialsWorldPosition2, 0); // shared, in
 	SpatialsWorldPosition2 *b = ecs_field(it, SpatialsWorldPosition2, 1); // self, in
-	SpatialsCrank *c = ecs_field(it, SpatialsCrank, 2);                       // self, in
+	SpatialsCrank *c = ecs_field(it, SpatialsCrank, 2);                   // self, in
 	ColorsWorldRgb *color = ecs_field(it, ColorsWorldRgb, 3);             // self, in
 	for (int i = 0; i < it->count; ++i, ++b, ++c, ++color) {
 		DrawLineEx((Vector2){a->x, a->y}, (Vector2){b->x, b->y}, c->t, (Color){color->r, color->g, color->b, 255});

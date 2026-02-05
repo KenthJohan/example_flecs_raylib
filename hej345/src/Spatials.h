@@ -40,8 +40,10 @@ typedef struct {
 } SpatialsCrank;
 
 typedef struct {
-	float l[4];
-	float angle;
+	ecs_entity_t entity_driver;
+	ecs_entity_t entity_follower;
+	float length_coupler;
+	float length_frame;
 } SpatialsFourBarLinkage;
 
 

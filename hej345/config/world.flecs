@@ -90,28 +90,38 @@ window1.canvas1.origin.a1 : tf {
 
 
 window1.canvas1.origin.a2 : tf {
-    Position2 : {-100, -20}
+    Position2 : {0, -20}
     Rotation : {0 * DEG2RAD}
     Rgb : {0, 50, 255}
-    Omega : {1 * DEG2RAD}
     end1 : tf {
-        Position2 : {50, 0}
+        Omega : {1 * DEG2RAD}
+        Position2
         Rotation : {0}
         Rgb : {0, 50, 255}
-        Crank : {20, 3}
+        Crank : {10, 3}
     }
 }
 
 
 window1.canvas1.origin.a3 : tf {
-    Position2 : {30, -20}
+    Position2 : {50, -20}
     Rotation : {0 * DEG2RAD}
     Rgb : {0, 50, 255}
-    Omega : {1 * DEG2RAD}
     end1 : tf {
-        Crank : {20, 3}
-        Position2 : {50, 0}
+        Crank : {30, 3}
+        Position2
         Rotation : {0}
         Rgb : {0, 50, 255}
+    }
+}
+
+
+
+
+linkage {
+    FourBarLinkage : {
+        window1.canvas1.origin.a2.end1,
+        window1.canvas1.origin.a3.end1,
+        50, 50
     }
 }

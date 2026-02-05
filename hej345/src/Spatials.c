@@ -76,25 +76,61 @@ static void Rotator(ecs_iter_t *it)
 	}
 }
 
+double calculateFollowerAngle(double L1, double L2, double L3, double L4, double theta2)
+{
+	// L1 = Ground length (fixed, along x-axis)
+	// L2 = Crank length
+	// L3 = Coupler length
+	// L4 = Follower length
+	// theta2 = Crank angle (input, in radians)
+
+	double K1, K2, K3;
+	double A, B, C, discriminant, theta4;
+
+	// Calculate the K constants (only K1, K2, K3 needed for theta4)
+	K1 = L1 / L2;
+	K2 = L1 / L4;
+	K3 = (L2 * L2 - L3 * L3 + L4 * L4 + L1 * L1) / (2 * L2 * L4);
+
+	// Calculate coefficients A, B, C for the quadratic equation in tan(theta4/2)
+	A = cos(theta2) - K1 - K2 * cos(theta2) + K3;
+	B = -2 * sin(theta2);
+	C = K1 - (K2 + 1) * cos(theta2) + K3;
+
+	// Solve quadratic equation for theta4
+	discriminant = B * B - 4 * A * C;
+
+	if (discriminant < 0) {
+		// printf("Error: No valid solution exists (discriminant < 0). Check linkage dimensions.\n");
+		return 0.0;
+	}
+
+	// Two possible solutions for theta4
+	double theta4_1 = 2 * atan2((-B + sqrt(discriminant)), (2 * A));
+	double theta4_2 = 2 * atan2((-B - sqrt(discriminant)), (2 * A));
+
+	// Return the first solution (open configuration)
+	// Use theta4_2 for crossed configuration if needed
+	theta4 = theta4_1;
+
+	return theta4;
+}
+
 static void SpatialsFourBarLinkage_Calculate(ecs_iter_t *it)
 {
-	SpatialsRotation const *r = ecs_field(it, SpatialsRotation, 0);       // shared, in
-	SpatialsFourBarLinkage *b = ecs_field(it, SpatialsFourBarLinkage, 1); // self, out
-	for (int i = 0; i < it->count; ++i, ++b) {
-		// Calculate positions of the four bar linkage based on input rotation
-		float a = r->radians;
-		float l1 = b->l[0];
-		float l2 = b->l[1];
-		float l3 = b->l[2];
-		float l4 = b->l[3];
-
-		// Using the law of cosines to find the angle at the coupler link
-		float A = l1;
-		float B = l2;
-		float C = sqrtf(l3 * l3 + l4 * l4 - 2 * l3 * l4 * cosf(a));
-
-		float angle_C = acosf((A * A + B * B - C * C) / (2 * A * B));
-		b->angle = angle_C;
+	SpatialsFourBarLinkage *l = ecs_field(it, SpatialsFourBarLinkage, 0); // self, inout
+	for (int i = 0; i < it->count; ++i, ++l) {
+		ecs_entity_t ea = ecs_get_parent(it->world, l->entity_driver);
+		ecs_entity_t eb = ecs_get_parent(it->world, l->entity_follower);
+		SpatialsWorldPosition2 const *pa = ecs_get(it->world, ea, SpatialsWorldPosition2);
+		SpatialsWorldPosition2 const *pb = ecs_get(it->world, eb, SpatialsWorldPosition2);
+		// Distance between the two fixed points (ground length)
+		l->length_frame = sqrtf((pb->x - pa->x) * (pb->x - pa->x) + (pb->y - pa->y) * (pb->y - pa->y));
+		float driver_angle = ecs_get(it->world, l->entity_driver, SpatialsRotation)->radians;
+		float driver_length = ecs_get(it->world, l->entity_driver, SpatialsCrank)->l;
+		float follower_length = ecs_get(it->world, l->entity_follower, SpatialsCrank)->l;
+		float theta4 = calculateFollowerAngle(l->length_frame, driver_length, l->length_coupler, follower_length, driver_angle);
+		ecs_set(it->world, l->entity_follower, SpatialsRotation, {.radians = theta4});
 	}
 }
 
@@ -189,8 +225,10 @@ void SpatialsImport(ecs_world_t *world)
 	ecs_struct(world,
 	{.entity = ecs_id(SpatialsFourBarLinkage),
 	.members = {
-	{.name = "l", .type = ecs_id(ecs_f32_t), .count = 4},
-	{.name = "angle", .type = ecs_id(ecs_f32_t)},
+	{.name = "entity_driver", .type = ecs_id(ecs_entity_t)},
+	{.name = "entity_follower", .type = ecs_id(ecs_entity_t)},
+	{.name = "length_coupler", .type = ecs_id(ecs_f32_t)},
+	{.name = "length_frame", .type = ecs_id(ecs_f32_t)},
 	}});
 
 	ecs_system(world,
@@ -229,19 +267,18 @@ void SpatialsImport(ecs_world_t *world)
 	}});
 
 	ecs_system(world,
-	{.entity = ecs_entity(world, {.name = "SpatialsFourBarLinkage_Calculate", .add = ecs_ids(ecs_dependson(EcsPreUpdate))}),
-	.callback = SpatialsFourBarLinkage_Calculate,
-	.query.terms = {
-	{.id = ecs_id(SpatialsRotation), .src.id = EcsUp, .trav = EcsChildOf, .inout = EcsIn},
-	{.id = ecs_id(SpatialsFourBarLinkage), .inout = EcsIn},
-	}});
-
-	ecs_system(world,
 	{.entity = ecs_entity(world, {.name = "Crank_To_Position", .add = ecs_ids(ecs_dependson(EcsPreUpdate))}),
 	.callback = Crank_To_Position,
 	.query.terms = {
 	{.id = ecs_id(SpatialsCrank), .inout = EcsIn},
 	{.id = ecs_id(SpatialsRotation), .inout = EcsIn},
 	{.id = ecs_id(SpatialsPosition2), .inout = EcsOut},
+	}});
+
+	ecs_system(world,
+	{.entity = ecs_entity(world, {.name = "SpatialsFourBarLinkage_Calculate", .add = ecs_ids(ecs_dependson(EcsPreUpdate))}),
+	.callback = SpatialsFourBarLinkage_Calculate,
+	.query.terms = {
+	{.id = ecs_id(SpatialsFourBarLinkage), .inout = EcsInOut},
 	}});
 }
