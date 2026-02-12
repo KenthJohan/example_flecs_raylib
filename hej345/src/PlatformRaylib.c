@@ -12,7 +12,7 @@
 #include "rlgl.h"
 
 typedef struct {
-	RenderTexture render;
+	RenderTexture rtex;
 	Camera2D camera;
 	ecs_query_t *query_circles;
 	ecs_query_t *query_rectangles;
@@ -122,7 +122,8 @@ static void RendersCanvas2_Create(ecs_iter_t *it)
 	ShapesRectangle *r = ecs_field(it, ShapesRectangle, 1); // self, in
 	for (int i = 0; i < it->count; ++i, ++c, ++r) {
 		PlatformRaylibCanvas2 *canvas = ecs_ensure(world, it->entities[i], PlatformRaylibCanvas2);
-		canvas->render = LoadRenderTexture(r->w, r->h);
+
+		canvas->rtex = LoadRenderTexture(ECS_MAX(r->w, 100), ECS_MAX(r->h, 100));
 		canvas->camera = (Camera2D){0};
 		canvas->query_circles = ecs_query_init(world,
 		&(ecs_query_desc_t){
@@ -245,7 +246,7 @@ static void DrawsRaylibCanvas_Update(ecs_iter_t *it)
 			c->camera.zoom = Clamp(expf(logf(c->camera.zoom) + scale), 0.125f, 64.0f);
 		}
 
-		BeginTextureMode(c->render);
+		BeginTextureMode(c->rtex);
 		ClearBackground(RAYWHITE);
 		BeginMode2D(c->camera);
 
@@ -285,9 +286,20 @@ static void DrawsRaylibCanvas_Draw(ecs_iter_t *it)
 	ClearBackground(BLACK);
 	while (ecs_query_next(it)) {
 		PlatformRaylibCanvas2 *c = ecs_field(it, PlatformRaylibCanvas2, 0); // self, in
-		for (int i = 0; i < it->count; ++i, ++c) {
-			Rectangle splitScreenRect = {0.0f, 0.0f, (float)c->render.texture.width, (float)-c->render.texture.height};
-			DrawTextureRec(c->render.texture, splitScreenRect, (Vector2){0, 0}, WHITE);
+		ShapesRectangle *r = ecs_field(it, ShapesRectangle, 1);             // self, in
+		for (int i = 0; i < it->count; ++i, ++c, ++r) {
+			bool resize = false;
+			if (c->rtex.texture.width != (int)r->w) {
+				resize = true;
+			} else if (c->rtex.texture.height != (int)r->h) {
+				resize = true;
+			}
+			if (resize) {
+				UnloadRenderTexture(c->rtex);
+				c->rtex = LoadRenderTexture(r->w, r->h);
+			}
+			Rectangle splitScreenRect = {0.0f, 0.0f, (float)c->rtex.texture.width, (float)-c->rtex.texture.height};
+			DrawTextureRec(c->rtex.texture, splitScreenRect, (Vector2){0, 0}, WHITE);
 		}
 	}
 	DrawRectangle(GetScreenWidth() / 2 - 2, 0, 4, GetScreenHeight(), LIGHTGRAY);
@@ -342,19 +354,25 @@ static void PlatformRaylibWindow_Create(ecs_iter_t *it)
 	.run = DrawsRaylibCanvas_Draw,
 	.query.terms = {
 	{.id = ecs_id(PlatformRaylibCanvas2), .inout = EcsIn},
+	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
 	}});
 }
 
 static void PlatformRaylibWindow_Update(ecs_iter_t *it)
 {
-	RendersWindow *w = ecs_field(it, RendersWindow, 0); // self, in
-	w->close_requested = WindowShouldClose();           // Does update and check for close
+	RendersWindow *w = ecs_field(it, RendersWindow, 0);     // self, in
+	ShapesRectangle *r = ecs_field(it, ShapesRectangle, 1); // self, in
+	w->close_requested = WindowShouldClose();               // Does update and check for close
 	if (IsKeyDown(KEY_ONE)) {
 		MaximizeWindow();
 	}
 	if (w->close_requested) {
 		ecs_delete(it->world, it->entities[0]);
 		CloseWindow();
+	}
+	if (IsWindowResized()) {
+		r->w = GetScreenWidth();
+		r->h = GetScreenHeight();
 	}
 }
 
@@ -381,7 +399,9 @@ void PlatformRaylibImport(ecs_world_t *world)
 	.callback = PlatformRaylibWindow_Update,
 	.query.terms = {
 	{.id = ecs_id(RendersWindow), .inout = EcsIn},
+	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
 	{.id = ecs_id(PlatformRaylibWindow), .inout = EcsIn},
+	{.id = ecs_id(ShapesRectangle), .inout = EcsIn},
 	}});
 
 	ecs_system_init(world,

@@ -8,13 +8,16 @@ typedef struct {
 } ShapesRectangle;
 
 typedef struct {
+	float w;
+	float h;
+} ShapesRectangleScale;
+
+typedef struct {
 	float r;
 } ShapesCircle;
 
-
-
 extern ECS_COMPONENT_DECLARE(ShapesRectangle);
+extern ECS_COMPONENT_DECLARE(ShapesRectangleScale);
 extern ECS_COMPONENT_DECLARE(ShapesCircle);
-extern ECS_COMPONENT_DECLARE(ShapesCrank);
 
 void ShapesImport(ecs_world_t *world);

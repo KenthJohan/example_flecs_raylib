@@ -7,11 +7,12 @@ const DEG2RAD: 0.017453292519943295769236907684886
 
 window1 {
     renders.Window : {0}
-    Rectangle : {699, 399}
+    Rectangle : {800, 400}
 }
 
 window1.canvas1 {
     renders.Canvas2
+    RectangleScale : {0.5, 1.0}
     Rectangle : {600, 300}
     mice.PositionLocal
 }
